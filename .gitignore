@@ -141,3 +141,35 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+### Java / Maven / Spring Boot ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.ear
+HELP.md
+.mvn/wrapper/maven-wrapper.properties
+
+### Spring Boot secrets / config local ###
+application-local.yml
+application-local.yaml
+application-secrets.yml
+application-secrets.yaml
+
+### IDE ###
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+
+### OS ###
+.DS_Store
+Thumbs.db
