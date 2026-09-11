@@ -173,3 +173,7 @@ application-secrets.yaml
 ### OS ###
 .DS_Store
 Thumbs.db
+
+### Angular específico ###
+.angular/
+frontend-pedidos360/.angular/
