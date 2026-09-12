@@ -1,20 +1,22 @@
 package cl.duoc.pedidos360.bff.controller;
-
+import cl.duoc.pedidos360.bff.entity.Order;
+import cl.duoc.pedidos360.bff.repository.OrderRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class OrdersController {
+    private final OrderRepository orderRepository;
+    public OrdersController(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
+    }
+
     @GetMapping("/api/orders")
     @PreAuthorize("hasAnyRole('Admin', 'Operator')")
-    public List<Map<String, Object>> getOrders() {
-        return List.of(
-                Map.of("id", 1, "cliente", "Juan Perez", "estado", "PENDIENTE"),
-                Map.of("id", 2, "cliente", "Maria Soto", "estado", "ENTREGADO")
-        );
+    public List<Order> getOrders(){
+        return orderRepository.findAll();
     }
     
 }
