@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-pedidos360-bff
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AZURE_AD_ISSUER_URI:https://login.microsoftonline.com/dafcc960-7ca2-4ecb-a012-71e2e1929fa5/v2.0}
+
+pedidos360:
+  security:
+    expected-audience: ${AZURE_AD_AUDIENCE:api://8a1f476e-1fc8-4240-aaf0-0af6b309712e}
