@@ -3,6 +3,7 @@
   <p>Bienvenido, {{ userName }}</p>
   <p>Roles: {{ userRoles.join(', ') || 'Sin rol asignado' }}</p>
   <button (click)="logout()">Cerrar sesión</button>
+  <button (click)="logToken()">Mostrar token (debug)</button>
 
   <hr>
 

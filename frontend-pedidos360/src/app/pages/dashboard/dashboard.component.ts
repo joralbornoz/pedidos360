@@ -48,4 +48,11 @@ export class DashboardComponent implements OnInit {
       }
     });
   }
+
+  async logToken(): Promise<void> {
+    const account = this.authService.getActiveAccount();
+    if (!account) return;
+    const token = await this.authService.acquireToken(account);
+    console.log(token);
+  }
 }
