@@ -1,6 +1,21 @@
 <div class="dashboard-container">
   <h1>Dashboard</h1>
   <p>Bienvenido, {{ userName }}</p>
-  <p>Roles: {{ userRoles.join(', ') || 'Sin roles asignados' }}</p>
+  <p>Roles: {{ userRoles.join(', ') || 'Sin rol asignado' }}</p>
   <button (click)="logout()">Cerrar sesión</button>
+
+  <hr>
+
+  <h2>Pedidos (GET /api/orders)</h2>
+  <button (click)="loadOrders()" [disabled]="ordersLoading">
+    {{ ordersLoading ? 'Cargando' : 'Cargar pedidos' }}
+  </button>
+
+  <p *ngIf="ordersError" style="color: red;">{{ ordersError }}</p>
+
+  <ul *ngIf="orders.length > 0">
+    <li *ngFor="let order of orders">
+      #{{ order.id }} — {{ order.cliente }} — {{ order.estado }}
+    </li>
+  </ul>
 </div>
