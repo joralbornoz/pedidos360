@@ -12,4 +12,4 @@ spring:
 
 pedidos360:
   security:
-    expected-audience: ${AZURE_AD_AUDIENCE:api://8a1f476e-1fc8-4240-aaf0-0af6b309712e}
+    expected-audience: ${AZURE_AD_AUDIENCE:8a1f476e-1fc8-4240-aaf0-0af6b309712e}
