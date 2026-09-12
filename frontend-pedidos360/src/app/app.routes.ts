@@ -12,6 +12,13 @@ export const routes: Routes = [
     component: DashboardComponent,
     canActivate: [MsalGuard]
   },
+  // Ejemplo para rutas futuras protegidas por rol específico (ej. Reports = solo Admin):
+  // Recuerda importar: import { roleGuard } from './core/role.guard';
+  // {
+  //   path: 'reports',
+  //   component: ReportsComponent,
+  //   canActivate: [MsalGuard, roleGuard('Admin')]
+  // },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' }
 ];
