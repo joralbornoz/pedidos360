@@ -39,4 +39,15 @@ export class AuthService {
   isLoggedIn(): boolean {
     return this.msalService.instance.getActiveAccount() !== null;
   }
+  getActiveAccount() {
+    return this.msalService.instance.getActiveAccount();
+  }
+
+  async acquireToken(account: any): Promise<string> {
+    const result = await this.msalService.instance.acquireTokenSilent({
+      scopes: environment.apiConfig.scopes,
+      account: account
+    });
+    return result.accessToken;
+  }
 }
