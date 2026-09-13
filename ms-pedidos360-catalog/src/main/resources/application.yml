@@ -8,6 +8,8 @@ spring:
     url: jdbc:postgresql://aws-0-sa-east-1.pooler.supabase.com:5432/postgres
     username: postgres.iheybwtypcbgiqitrdpf
     password: ${SUPABASE_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 4
   jpa:
     hibernate:
       ddl-auto: update
