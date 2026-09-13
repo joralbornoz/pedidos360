@@ -8,7 +8,7 @@ export const environment = {
   },
   apiConfig: {
     scopes: ['api://8a1f476e-1fc8-4240-aaf0-0af6b309712e/access_as_user'],
-    bffEndpoint: 'http://localhost:8080/api'
+    bffEndpoint: 'https://apim-pedidos360.azure-api.net'
   }
 };
 

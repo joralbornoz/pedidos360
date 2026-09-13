@@ -17,6 +17,6 @@ export class OrdersService {
   constructor(private http: HttpClient) {}
 
   getOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${environment.apiConfig.bffEndpoint}/orders`);
+  return this.http.get<Order[]>(`${environment.apiConfig.bffEndpoint}/api/orders`);
      }
 }
