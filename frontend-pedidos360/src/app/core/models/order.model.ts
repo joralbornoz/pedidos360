@@ -7,7 +7,7 @@ export type OrderStatus =
 
 export interface OrderItem {
   productoId: number;
-  productNombre: string;
+  productNombre?: string; // opcional: el backend puede no enviarlo
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
@@ -15,14 +15,14 @@ export interface OrderItem {
 
 export interface Order {
   id: number;
-  numero: string;
-  clienteId: string;
-  cliente: string;
-  clienteEmail: string;
+  numero?: string;           // opcional: el backend puede usar otro campo
+  clienteId?: string;        // opcional
+  cliente?: string;          // opcional
+  clienteEmail?: string;     // opcional
   estado: OrderStatus;
-  fecha: string;           // ISO 8601
-  fechaActualizacion: string;
-  items: OrderItem[];
+  fecha: string;             // ISO 8601
+  fechaActualizacion?: string;
+  items?: OrderItem[];       // opcional: puede no venir en listado
   total: number;
   notas?: string;
 }

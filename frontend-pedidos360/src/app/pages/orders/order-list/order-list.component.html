@@ -122,7 +122,7 @@
                 }
                 <td>{{ formatDate(order.fecha) }}</td>
                 <td>
-                  <span class="badge badge-neutral">{{ order.items.length }} ítem{{ order.items.length !== 1 ? 's' : '' }}</span>
+                  <span class="badge badge-neutral">{{ order.items?.length ?? 0 }} ítem{{ (order.items?.length ?? 0) !== 1 ? 's' : '' }}</span>
                 </td>
                 <td><strong>{{ formatCLP(order.total) }}</strong></td>
                 <td>

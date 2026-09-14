@@ -204,7 +204,7 @@
                   <tr (click)="goToOrder(order.id)" [id]="'customer-order-row-' + order.id">
                     <td><strong>{{ order.numero }}</strong></td>
                     <td>{{ formatDate(order.fecha) }}</td>
-                    <td>{{ order.items.length }} producto{{ order.items.length !== 1 ? 's' : '' }}</td>
+                    <td>{{ order.items?.length ?? 0 }} producto{{ (order.items?.length ?? 0) !== 1 ? 's' : '' }}</td>
                     <td><strong>{{ formatCLP(order.total) }}</strong></td>
                     <td>
                       <app-order-status-badge [status]="order.estado"></app-order-status-badge>

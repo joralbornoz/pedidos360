@@ -79,9 +79,9 @@ export class OrderListComponent implements OnInit {
     if (this.searchText.trim()) {
       const q = this.searchText.toLowerCase();
       result = result.filter(o =>
-        o.numero.toLowerCase().includes(q) ||
-        o.cliente.toLowerCase().includes(q) ||
-        o.clienteEmail.toLowerCase().includes(q)
+        (o.numero ?? '').toLowerCase().includes(q) ||
+        (o.cliente ?? '').toLowerCase().includes(q) ||
+        (o.clienteEmail ?? '').toLowerCase().includes(q)
       );
     }
 

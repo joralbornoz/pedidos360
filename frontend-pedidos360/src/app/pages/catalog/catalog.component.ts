@@ -48,7 +48,7 @@ export class CatalogComponent implements OnInit {
     this.catalogService.getProducts().subscribe({
       next: products => {
         this.allProducts = products;
-        this.categories  = [...new Set(products.map(p => p.categoria))].sort();
+        this.categories  = [...new Set(products.map(p => p.categoria).filter((c): c is string => !!c))].sort();
         this.applyFilters();
         this.loading = false;
       },
@@ -66,8 +66,8 @@ export class CatalogComponent implements OnInit {
       const q = this.searchText.toLowerCase();
       result = result.filter(p =>
         p.nombre.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q) ||
-        p.categoria.toLowerCase().includes(q)
+        (p.sku ?? '').toLowerCase().includes(q) ||
+        (p.categoria ?? '').toLowerCase().includes(q)
       );
     }
 

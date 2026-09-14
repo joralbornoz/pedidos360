@@ -59,8 +59,8 @@ const MOCK_PRODUCTS: Product[] = [
 // ── Servicio ─────────────────────────────────────────────────────────────────
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
-  private useMock = true; // Cambiar a false para conectar al BFF real
-  private baseUrl = `${environment.apiConfig.bffEndpoint}/api/products`;
+  private useMock = false; // Mock desactivado — conectado al BFF real
+  private baseUrl = `${environment.apiConfig.bffEndpoint}/api/catalog`;
 
   constructor(private http: HttpClient) {}
 

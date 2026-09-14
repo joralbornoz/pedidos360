@@ -12,7 +12,7 @@ import { Product } from '../../../core/models/product.model';
 })
 export class ProductFormComponent implements OnInit, OnChanges {
   @Input() product: Product | null = null; // null = create, Product = edit
-  @Output() saved     = new EventEmitter<Product>();
+  @Output() saved = new EventEmitter<Product>();
   @Output() cancelled = new EventEmitter<void>();
 
   form!: FormGroup;
@@ -21,7 +21,7 @@ export class ProductFormComponent implements OnInit, OnChanges {
     'Computadoras', 'Monitores', 'Periféricos', 'Almacenamiento', 'Accesorios', 'Redes', 'Audio'
   ];
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder) { }
 
   ngOnInit(): void {
     this.buildForm();
@@ -40,36 +40,36 @@ export class ProductFormComponent implements OnInit, OnChanges {
 
   private buildForm(): void {
     this.form = this.fb.group({
-      nombre:    ['', [Validators.required, Validators.minLength(3)]],
-      sku:       ['', [Validators.required, Validators.pattern(/^[A-Z0-9\-]+$/)]],
+      nombre: ['', [Validators.required, Validators.minLength(3)]],
+      sku: ['', [Validators.required, Validators.pattern(/^[A-Z0-9\-]+$/)]],
       categoria: ['', Validators.required],
       descripcion: ['', [Validators.required, Validators.maxLength(300)]],
-      precio:    [null, [Validators.required, Validators.min(1)]],
-      stock:     [0,    [Validators.required, Validators.min(0)]],
-      activo:    [true],
+      precio: [null, [Validators.required, Validators.min(1)]],
+      stock: [0, [Validators.required, Validators.min(0)]],
+      activo: [true],
     });
   }
 
   private patchForm(p: Product): void {
     this.form.patchValue({
-      nombre:     p.nombre,
-      sku:        p.sku,
-      categoria:  p.categoria,
+      nombre: p.nombre,
+      sku: p.sku,
+      categoria: p.categoria,
       descripcion: p.descripcion,
-      precio:     p.precio,
-      stock:      p.stock,
-      activo:     p.activo,
+      precio: p.precio,
+      stock: p.stock,
+      activo: p.activo,
     });
   }
 
   fieldError(name: string): string | null {
     const ctrl: AbstractControl | null = this.form.get(name);
     if (!ctrl || !ctrl.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required'])   return 'Este campo es requerido.';
-    if (ctrl.errors?.['minlength'])  return `Mínimo ${ctrl.errors['minlength'].requiredLength} caracteres.`;
-    if (ctrl.errors?.['maxlength'])  return `Máximo ${ctrl.errors['maxlength'].requiredLength} caracteres.`;
-    if (ctrl.errors?.['min'])        return `El valor mínimo es ${ctrl.errors['min'].min}.`;
-    if (ctrl.errors?.['pattern'])    return 'Solo letras mayúsculas, números y guiones (ej: LAP-001).';
+    if (ctrl.errors?.['required']) return 'Este campo es requerido.';
+    if (ctrl.errors?.['minlength']) return `Mínimo ${ctrl.errors['minlength'].requiredLength} caracteres.`;
+    if (ctrl.errors?.['maxlength']) return `Máximo ${ctrl.errors['maxlength'].requiredLength} caracteres.`;
+    if (ctrl.errors?.['min']) return `El valor mínimo es ${ctrl.errors['min'].min}.`;
+    if (ctrl.errors?.['pattern']) return 'Solo letras mayúsculas, números y guiones (ej: LAP-001).';
     return 'Valor no válido.';
   }
 

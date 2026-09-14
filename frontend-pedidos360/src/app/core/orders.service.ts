@@ -69,7 +69,7 @@ const MOCK_ORDERS: Order[] = [
 // ── Servicio ─────────────────────────────────────────────────────────────────
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
-  private useMock = true; // Cambiar a false para conectar al BFF real
+  private useMock = false; // Mock desactivado — conectado al BFF real
   private baseUrl = `${environment.apiConfig.bffEndpoint}/api/orders`;
 
   constructor(private http: HttpClient) {}
@@ -119,17 +119,28 @@ export class OrdersService {
     return this.http.patch<Order>(`${this.baseUrl}/${id}/status`, { estado });
   }
 
-  // Estadísticas de resumen (para Dashboard)
-  getSummaryStats() {
-    const orders = MOCK_ORDERS;
-    return of({
-      totalPedidos: orders.length,
-      pedidosPendientes: orders.filter(o => o.estado === 'Pendiente').length,
-      pedidosEnProceso: orders.filter(o => o.estado === 'En proceso').length,
-      pedidosCompletados: orders.filter(o => o.estado === 'Completado').length,
-      ventasDelDia: orders
-        .filter(o => o.estado === 'Completado')
-        .reduce((sum, o) => sum + o.total, 0),
+  // Estadísticas de resumen (para Dashboard Admin)
+  // Calcula desde getOrders() — funciona tanto con mock como con datos reales
+  getSummaryStats(): Observable<{
+    totalPedidos: number;
+    pedidosPendientes: number;
+    pedidosEnProceso: number;
+    pedidosCompletados: number;
+    ventasDelDia: number;
+  }> {
+    return new Observable(observer => {
+      this.getOrders().subscribe(orders => {
+        observer.next({
+          totalPedidos:       orders.length,
+          pedidosPendientes:  orders.filter(o => o.estado === 'Pendiente').length,
+          pedidosEnProceso:   orders.filter(o => o.estado === 'En proceso').length,
+          pedidosCompletados: orders.filter(o => o.estado === 'Completado').length,
+          ventasDelDia:       orders
+            .filter(o => o.estado === 'Completado')
+            .reduce((sum, o) => sum + o.total, 0),
+        });
+        observer.complete();
+      }, err => observer.error(err));
     });
   }
 }

@@ -57,7 +57,7 @@
               </div>
               <div class="info-item">
                 <span class="info-label">Última actualización</span>
-                <span class="info-value">{{ formatDate(order.fechaActualizacion) }}</span>
+                <span class="info-value">{{ order.fechaActualizacion ? formatDate(order.fechaActualizacion) : '—' }}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">ID interno</span>
@@ -78,7 +78,7 @@
         <div class="card" id="order-items-card" style="margin-top:1.25rem;">
           <div class="card-header">
             <h3>Productos del pedido</h3>
-            <span class="badge badge-neutral">{{ order.items.length }} ítem{{ order.items.length !== 1 ? 's' : '' }}</span>
+            <span class="badge badge-neutral">{{ order.items?.length ?? 0 }} ítem{{ (order.items?.length ?? 0) !== 1 ? 's' : '' }}</span>
           </div>
           <div style="overflow-x:auto;">
             <table class="data-table" id="order-items-table">
