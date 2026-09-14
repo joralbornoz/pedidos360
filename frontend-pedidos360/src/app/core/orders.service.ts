@@ -116,7 +116,7 @@ export class OrdersService {
         return of({ ...order });
       }
     }
-    return this.http.patch<Order>(`${this.baseUrl}/${id}/status`, { estado });
+    return this.http.patch<Order>(`${this.baseUrl}/${id}/status?estado=${estado}`, {});
   }
 
   // Estadísticas de resumen (para Dashboard Admin)
