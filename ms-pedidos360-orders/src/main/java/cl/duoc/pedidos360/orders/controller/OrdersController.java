@@ -16,6 +16,12 @@ public class OrdersController {
         return orderRepository.findAll();
     }
 
+    @GetMapping("/api/orders/{id}")
+    public Order getOrderById(@PathVariable Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+    }
+
     @PostMapping("/api/orders")
     public Order createOrder(@RequestBody Order order) {
         return orderRepository.save(order);
