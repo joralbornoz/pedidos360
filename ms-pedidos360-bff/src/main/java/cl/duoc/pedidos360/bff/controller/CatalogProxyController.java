@@ -2,8 +2,7 @@ package cl.duoc.pedidos360.bff.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -27,5 +26,15 @@ public class CatalogProxyController {
                 .uri("/api/catalog")
                 .retrieve()
                 .body(List.class);
+    }
+
+    @PostMapping("/api/catalog")
+    @PreAuthorize("hasAnyRole('Admin', 'Operator')")
+    public Map<String, Object> createProduct(@RequestBody Map<String, Object> product) {
+        return restClient.post()
+                .uri("/api/catalog")
+                .body(product)
+                .retrieve()
+                .body(Map.class);
     }
 }
