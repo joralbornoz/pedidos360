@@ -20,8 +20,11 @@ public class ProductsController {
 
     @PostMapping("/api/catalog")
     public Product createProduct(@RequestBody Product product) {
-    product.setId(null);  
-    return productRepository.save(product);
+    Product newProduct = new Product();
+    newProduct.setNombre(product.getNombre());
+    newProduct.setPrecio(product.getPrecio());
+    newProduct.setStock(product.getStock());
+    return productRepository.save(newProduct);
     }
 
     @PutMapping("/api/catalog/{id}")
