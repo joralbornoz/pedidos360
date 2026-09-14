@@ -101,17 +101,32 @@ export class CatalogService {
   }
 
   toggleActive(id: number): Observable<Product> {
-    const product = MOCK_PRODUCTS.find(p => p.id === id);
-    return this.updateProduct(id, { activo: !product?.activo });
+    return new Observable(observer => {
+      this.getProductById(id).subscribe(product => {
+        this.updateProduct(id, { activo: !product?.activo }).subscribe({
+          next: updated => { observer.next(updated); observer.complete(); },
+          error: err => observer.error(err)
+        });
+      }, err => observer.error(err));
+    });
   }
 
-  getCatalogStats() {
-    const products = MOCK_PRODUCTS;
-    return of({
-      totalProductos: products.length,
-      activos: products.filter(p => p.activo).length,
-      sinStock: products.filter(p => p.stock === 0).length,
-      stockBajo: products.filter(p => p.stock > 0 && p.stock <= 5).length,
+  getCatalogStats(): Observable<{
+    totalProductos: number;
+    activos: number;
+    sinStock: number;
+    stockBajo: number;
+  }> {
+    return new Observable(observer => {
+      this.getProducts().subscribe(products => {
+        observer.next({
+          totalProductos: products.length,
+          activos: products.filter(p => p.activo).length,
+          sinStock: products.filter(p => p.stock === 0).length,
+          stockBajo: products.filter(p => p.stock > 0 && p.stock <= 5).length,
+        });
+        observer.complete();
+      }, err => observer.error(err));
     });
   }
 }

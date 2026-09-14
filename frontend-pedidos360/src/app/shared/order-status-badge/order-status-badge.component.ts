@@ -8,8 +8,13 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; cssClass: string; icon
   'Enviado':     { label: 'Enviado',     cssClass: 'badge-primary', icon: '🚚' },
   'Completado':  { label: 'Completado',  cssClass: 'badge-success', icon: '✅' },
   'Cancelado':   { label: 'Cancelado',   cssClass: 'badge-danger',  icon: '✕' },
+  'PENDIENTE':   { label: 'Pendiente',   cssClass: 'badge-warning', icon: '⏳' },
+  'ENTREGADO':   { label: 'Entregado',   cssClass: 'badge-success', icon: '✅' },
+  'DESPACHADO':  { label: 'Despachado',  cssClass: 'badge-primary', icon: '🚚' },
+  'ACEPTADO':    { label: 'Aceptado',    cssClass: 'badge-info',    icon: '🔄' },
+  'CREADO':      { label: 'Creado',      cssClass: 'badge-neutral', icon: '📝' },
+  'CANCELADO':   { label: 'Cancelado',   cssClass: 'badge-danger',  icon: '✕' },
 };
-
 @Component({
   selector: 'app-order-status-badge',
   standalone: true,

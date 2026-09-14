@@ -1,9 +1,6 @@
 export type OrderStatus =
-  | 'Pendiente'
-  | 'En proceso'
-  | 'Enviado'
-  | 'Completado'
-  | 'Cancelado';
+  | 'Pendiente' | 'En proceso' | 'Enviado' | 'Completado' | 'Cancelado'
+  | 'PENDIENTE' | 'ENTREGADO' | 'DESPACHADO' | 'ACEPTADO' | 'CREADO' | 'CANCELADO';
 
 export interface OrderItem {
   productoId: number;
