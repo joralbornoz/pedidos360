@@ -1,0 +1,85 @@
+<!-- GRID view -->
+@if (viewMode === 'grid') {
+  <div class="product-card card" [class.inactive]="!product.activo">
+    <!-- Stock alert strip -->
+    @if (product.stock === 0) {
+      <div class="stock-alert-strip danger">Sin stock</div>
+    } @else if (product.stock <= 5) {
+      <div class="stock-alert-strip warning">Stock bajo</div>
+    }
+
+    <div class="card-body product-card-body">
+      <!-- Category badge + active toggle -->
+      <div class="product-card-top">
+        <span class="badge badge-neutral cat-badge">{{ product.categoria }}</span>
+        <button class="active-toggle"
+                [class.active]="product.activo"
+                (click)="toggleActiveClicked.emit(product)"
+                [title]="product.activo ? 'Desactivar producto' : 'Activar producto'"
+                [id]="'toggle-active-' + product.id">
+          {{ product.activo ? '✅' : '⚫' }}
+        </button>
+      </div>
+
+      <!-- Product info -->
+      <h3 class="product-name">{{ product.nombre }}</h3>
+      <p class="product-sku">SKU: {{ product.sku }}</p>
+      <p class="product-desc">{{ product.descripcion }}</p>
+
+      <!-- Price + Stock -->
+      <div class="product-card-footer">
+        <div class="product-price">{{ formatCLP(product.precio) }}</div>
+        <span class="stock-badge" [class]="stockClass">{{ stockLabel }}</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="product-actions">
+        <button class="btn btn-secondary btn-sm btn-full"
+                (click)="editClicked.emit(product)"
+                [id]="'btn-edit-' + product.id">
+          ✏️ Editar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- LIST view -->
+@if (viewMode === 'list') {
+  <div class="product-list-item card" [class.inactive]="!product.activo">
+    <div class="list-item-inner">
+      <div class="list-name-col">
+        <div class="list-product-name">{{ product.nombre }}</div>
+        <div class="list-product-sku">{{ product.sku }}</div>
+      </div>
+      <div class="list-cat-col">
+        <span class="badge badge-neutral">{{ product.categoria }}</span>
+      </div>
+      <div class="list-price-col">
+        <strong>{{ formatCLP(product.precio) }}</strong>
+      </div>
+      <div class="list-stock-col">
+        <span class="stock-badge" [class]="stockClass">{{ stockLabel }}</span>
+      </div>
+      <div class="list-status-col">
+        @if (product.activo) {
+          <span class="badge badge-success">Activo</span>
+        } @else {
+          <span class="badge badge-neutral">Inactivo</span>
+        }
+      </div>
+      <div class="list-actions-col">
+        <button class="btn btn-secondary btn-sm"
+                (click)="editClicked.emit(product)"
+                [id]="'btn-edit-list-' + product.id">
+          Editar
+        </button>
+        <button class="btn btn-ghost btn-sm"
+                (click)="toggleActiveClicked.emit(product)"
+                [id]="'btn-toggle-list-' + product.id">
+          {{ product.activo ? 'Desactivar' : 'Activar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

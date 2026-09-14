@@ -1,0 +1,82 @@
+.back-btn { margin-bottom: 1.5rem; }
+
+/* ── 2-column layout ─────────────────────────── */
+.detail-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.detail-main { min-width: 0; }
+.detail-sidebar { position: sticky; top: calc(var(--topbar-height) + 1.5rem); }
+
+/* ── Info grid ───────────────────────────────── */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.info-value {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* ── Total row ───────────────────────────────── */
+.total-row {
+  background: var(--color-surface-2);
+  border-top: 2px solid var(--color-border) !important;
+}
+
+.total-value {
+  font-size: 1rem;
+  color: var(--brand);
+}
+
+/* ── Summary card ────────────────────────────── */
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+
+  &.total {
+    padding-top: 0.75rem;
+    font-size: 1rem;
+    strong { font-size: 1.125rem; color: var(--brand); }
+  }
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0.5rem 0;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 900px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-sidebar { position: static; }
+
+  .info-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,83 @@
+<nav class="topbar" id="main-topbar">
+  <div class="topbar-inner">
+    <!-- Logo -->
+    <a class="topbar-logo" routerLink="/dashboard" id="topbar-logo-link">
+      <span class="logo-icon">📦</span>
+      <span class="logo-text">Pedidos<span class="logo-accent">360</span></span>
+    </a>
+
+    <!-- Nav Links (desktop) -->
+    <ul class="topbar-nav" id="topbar-nav">
+      <li>
+        <a routerLink="/dashboard"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           id="nav-dashboard">
+          Dashboard
+        </a>
+      </li>
+      @if (showOrders) {
+        <li>
+          <a routerLink="/orders"
+             routerLinkActive="active"
+             id="nav-orders">
+            Pedidos
+          </a>
+        </li>
+      }
+      @if (showCatalog) {
+        <li>
+          <a routerLink="/catalog"
+             routerLinkActive="active"
+             id="nav-catalog">
+            Catálogo
+          </a>
+        </li>
+      }
+    </ul>
+
+    <!-- Right side -->
+    <div class="topbar-right">
+      <!-- Roles badge -->
+      @if (userRoles.length > 0) {
+        <span class="role-badge" id="topbar-role-badge">{{ userRoles[0] }}</span>
+      }
+
+      <!-- User avatar + name -->
+      <div class="user-info">
+        <div class="user-avatar" id="topbar-user-avatar">{{ userInitials }}</div>
+        <span class="user-name">{{ userName || 'Usuario' }}</span>
+      </div>
+
+      <!-- Logout -->
+      <button class="btn-logout" (click)="logout()" id="topbar-logout-btn" title="Cerrar sesión">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+
+      <!-- Mobile menu toggle -->
+      <button class="mobile-toggle" (click)="toggleMobileMenu()" id="topbar-mobile-toggle"
+              [class.open]="mobileMenuOpen" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile nav -->
+  @if (mobileMenuOpen) {
+    <div class="mobile-nav" id="topbar-mobile-nav">
+      <a routerLink="/dashboard" (click)="mobileMenuOpen=false">Dashboard</a>
+      @if (showOrders) {
+        <a routerLink="/orders" (click)="mobileMenuOpen=false">Pedidos</a>
+      }
+      @if (showCatalog) {
+        <a routerLink="/catalog" (click)="mobileMenuOpen=false">Catálogo</a>
+      }
+      <button class="mobile-logout" (click)="logout()">Cerrar sesión</button>
+    </div>
+  }
+</nav>
