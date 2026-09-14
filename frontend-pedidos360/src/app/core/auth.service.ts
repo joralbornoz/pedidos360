@@ -11,7 +11,11 @@ export class AuthService {
   login(): void {
     this.msalService.loginRedirect({
       scopes: environment.apiConfig.scopes,
-      redirectStartPage: window.location.origin + '/dashboard'
+      redirectStartPage: window.location.origin + '/dashboard',
+      extraQueryParameters: {
+        'dc': 'ESTS-PILOT-NONINTERACTIVE',
+        'p': 'Pedidos360SignUpSignIn'
+      }
     });
   }
 
