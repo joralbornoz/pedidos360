@@ -1,0 +1,153 @@
+<div class="page-layout" id="catalog-page">
+  <app-topbar></app-topbar>
+
+  <main class="page-content">
+    <!-- Header -->
+    <header class="page-header">
+      <div class="catalog-header-row">
+        <div>
+          <h1>Catálogo de productos</h1>
+          <p>Gestiona el inventario, crea y edita productos del sistema.</p>
+        </div>
+        <button class="btn btn-primary" (click)="openCreateForm()" id="btn-new-product">
+          + Nuevo producto
+        </button>
+      </div>
+    </header>
+
+    <!-- KPI Mini Strip -->
+    <div class="catalog-stats" id="catalog-stats">
+      <div class="stat-chip">
+        <span class="stat-icon">🗂️</span>
+        <span class="stat-value">{{ stats.totalProductos }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat-chip success">
+        <span class="stat-icon">✅</span>
+        <span class="stat-value">{{ stats.activos }}</span>
+        <span class="stat-label">Activos</span>
+      </div>
+      <div class="stat-chip danger">
+        <span class="stat-icon">⚠️</span>
+        <span class="stat-value">{{ stats.sinStock }}</span>
+        <span class="stat-label">Sin stock</span>
+      </div>
+      <div class="stat-chip warning">
+        <span class="stat-icon">📉</span>
+        <span class="stat-value">{{ stats.stockBajo }}</span>
+        <span class="stat-label">Stock bajo</span>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="table-toolbar catalog-toolbar" id="catalog-toolbar">
+      <!-- Search -->
+      <div class="search-wrapper" id="catalog-search">
+        <span class="search-icon">🔍</span>
+        <input type="search" class="form-control"
+               placeholder="Buscar por nombre, SKU o categoría…"
+               [(ngModel)]="searchText"
+               (ngModelChange)="applyFilters()"
+               id="input-search-products">
+      </div>
+
+      <!-- Category -->
+      <select class="form-control" style="width:auto; min-width:140px;"
+              [(ngModel)]="filterCat"
+              (ngModelChange)="applyFilters()"
+              id="select-filter-category">
+        <option value="">Todas las categorías</option>
+        @for (cat of categories; track cat) {
+          <option [value]="cat">{{ cat }}</option>
+        }
+      </select>
+
+      <!-- Status -->
+      <select class="form-control" style="width:auto; min-width:130px;"
+              [(ngModel)]="filterStatus"
+              (ngModelChange)="applyFilters()"
+              id="select-filter-product-status">
+        <option value="">Todo el stock</option>
+        <option value="activo">Activos</option>
+        <option value="inactivo">Inactivos</option>
+        <option value="sin-stock">Sin stock</option>
+        <option value="stock-bajo">Stock bajo (≤5)</option>
+      </select>
+
+      @if (hasFilters) {
+        <button class="btn btn-ghost btn-sm" (click)="clearFilters()" id="btn-clear-catalog-filters">
+          ✕ Limpiar
+        </button>
+      }
+
+      <span class="results-count" id="catalog-results-count">
+        {{ filteredProducts.length }} producto{{ filteredProducts.length !== 1 ? 's' : '' }}
+      </span>
+
+      <!-- View toggle -->
+      <div class="view-toggle" id="catalog-view-toggle">
+        <button class="view-btn" [class.active]="viewMode === 'grid'"
+                (click)="toggleView('grid')" id="btn-view-grid" title="Vista grid">
+          ⊞
+        </button>
+        <button class="view-btn" [class.active]="viewMode === 'list'"
+                (click)="toggleView('list')" id="btn-view-list" title="Vista lista">
+          ☰
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (loading) {
+      <div class="loading-overlay" id="catalog-loading">
+        <div class="spinner"></div>
+        <span>Cargando productos…</span>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error) {
+      <div class="alert alert-danger" id="catalog-error">
+        <span class="alert-icon">⚠️</span> {{ error }}
+      </div>
+    }
+
+    <!-- Empty -->
+    @if (!loading && !error && filteredProducts.length === 0) {
+      <div class="empty-state" id="catalog-empty">
+        <div class="empty-icon">🗂️</div>
+        <h3>No se encontraron productos</h3>
+        <p>Ajusta los filtros o crea un nuevo producto.</p>
+        <button class="btn btn-primary" (click)="openCreateForm()">
+          + Nuevo producto
+        </button>
+      </div>
+    }
+
+    <!-- Products -->
+    @if (!loading && !error && filteredProducts.length > 0) {
+      <div [class]="viewMode === 'grid' ? 'products-grid' : 'products-list'"
+           id="products-container">
+        @for (product of filteredProducts; track product.id) {
+          <app-product-card
+            [product]="product"
+            [viewMode]="viewMode"
+            (editClicked)="openEditForm($event)"
+            (toggleActiveClicked)="toggleActive($event)"
+            [id]="'product-card-' + product.id">
+          </app-product-card>
+        }
+      </div>
+    }
+  </main>
+
+  <!-- Product Form Modal -->
+  @if (showForm) {
+    <app-product-form
+      [product]="editProduct"
+      (saved)="onFormSaved($event)"
+      (cancelled)="closeForm()"
+      id="product-form-modal">
+    </app-product-form>
+  }
+</div>

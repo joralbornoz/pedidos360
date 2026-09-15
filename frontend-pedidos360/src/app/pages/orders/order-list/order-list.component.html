@@ -1,0 +1,145 @@
+<main class="page-content" id="order-list-page">
+  <!-- Page header -->
+  <header class="page-header">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+      <div>
+        <h1>{{ pageTitle }}</h1>
+        <p>
+          @if (isAdmin())    { Administra y supervisa todos los pedidos del sistema. }
+          @if (isOperator()) { Gestiona los pedidos, crea nuevos y actualiza estados. }
+          @if (isCustomer()) { Consulta el estado de tus pedidos y crea nuevos. }
+        </p>
+      </div>
+      @if (canCreate) {
+        <button class="btn btn-primary" (click)="createOrder()" id="btn-create-order">
+          + Nuevo pedido
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- Filters toolbar -->
+  <div class="table-wrapper" id="orders-table-wrapper">
+    <div class="table-toolbar" id="orders-toolbar">
+      <!-- Search -->
+      <div class="search-wrapper" id="orders-search">
+        <span class="search-icon">🔍</span>
+        <input
+          type="search"
+          class="form-control"
+          placeholder="Buscar por nº, cliente o email…"
+          [(ngModel)]="searchText"
+          (ngModelChange)="applyFilters()"
+          id="input-search-orders">
+      </div>
+
+      <!-- Status filter -->
+      <select class="form-control" style="width:auto; min-width:150px;"
+              [(ngModel)]="filterStatus"
+              (ngModelChange)="applyFilters()"
+              id="select-filter-status">
+        <option value="">Todos los estados</option>
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+
+      <!-- Date filter -->
+      <input type="date" class="form-control" style="width:auto;"
+             [(ngModel)]="filterDate"
+             (ngModelChange)="applyFilters()"
+             id="input-filter-date">
+
+      <!-- Clear filters -->
+      @if (searchText || filterStatus || filterDate) {
+        <button class="btn btn-ghost btn-sm" (click)="clearFilters()" id="btn-clear-filters">
+          ✕ Limpiar
+        </button>
+      }
+
+      <!-- Results count -->
+      <span class="results-count" id="orders-results-count">
+        {{ filteredOrders.length }} resultado{{ filteredOrders.length !== 1 ? 's' : '' }}
+      </span>
+    </div>
+
+    <!-- Loading -->
+    @if (loading) {
+      <div class="loading-overlay" id="orders-loading">
+        <div class="spinner"></div>
+        <span>Cargando pedidos…</span>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error) {
+      <div class="alert alert-danger" style="margin:1rem;" id="orders-error">
+        <span class="alert-icon">⚠️</span>
+        {{ error }}
+      </div>
+    }
+
+    <!-- Table -->
+    @if (!loading && !error) {
+      @if (filteredOrders.length === 0) {
+        <div class="empty-state" id="orders-empty">
+          <div class="empty-icon">📦</div>
+          <h3>No se encontraron pedidos</h3>
+          <p>Intenta cambiar los filtros o crea un nuevo pedido.</p>
+          @if (canCreate) {
+            <button class="btn btn-primary" (click)="createOrder()">
+              + Nuevo pedido
+            </button>
+          }
+        </div>
+      } @else {
+        <table class="data-table" id="orders-data-table">
+          <thead>
+            <tr>
+              <th>Nº Pedido</th>
+              @if (showClientFilter) { <th>Cliente</th> }
+              <th>Fecha</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th style="width:80px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of filteredOrders; track order.id) {
+              <tr (click)="goToDetail(order.id)"
+                  [id]="'order-row-' + order.id">
+                <td>
+                  <strong>{{ order.numero }}</strong>
+                </td>
+                @if (showClientFilter) {
+                  <td>
+                    <div>
+                      <div style="font-weight:600; font-size:0.875rem;">{{ order.cliente }}</div>
+                      <div style="font-size:0.8rem; color:var(--color-text-muted);">{{ order.clienteEmail }}</div>
+                    </div>
+                  </td>
+                }
+                <td>{{ formatDate(order.fecha) }}</td>
+                <td>
+                  <span class="badge badge-neutral">{{ order.items?.length ?? 0 }} ítem{{ (order.items?.length ?? 0) !== 1 ? 's' : '' }}</span>
+                </td>
+                <td><strong>{{ formatCLP(order.total) }}</strong></td>
+                <td>
+                  <app-order-status-badge [status]="order.estado"></app-order-status-badge>
+                </td>
+                <td>
+                  <button class="btn btn-ghost btn-sm"
+                          (click)="$event.stopPropagation(); goToDetail(order.id)"
+                          [id]="'btn-detail-' + order.id">
+                    Ver →
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    }
+  </div>
+</main>

@@ -1,0 +1,126 @@
+<div class="modal-overlay" (click)="cancel()" id="product-form-overlay">
+  <div class="modal-box" (click)="$event.stopPropagation()" id="product-form-box">
+
+    <div class="modal-header">
+      <h3>{{ title }}</h3>
+      <button class="modal-close" (click)="cancel()" id="btn-close-form" aria-label="Cerrar">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" id="product-form" novalidate>
+      <div class="modal-body">
+
+        <!-- Nombre -->
+        <div class="form-group">
+          <label class="form-label" for="input-nombre">Nombre del producto *</label>
+          <input class="form-control"
+                 [class.invalid]="fieldError('nombre')"
+                 formControlName="nombre"
+                 id="input-nombre"
+                 placeholder="ej: Laptop Lenovo IdeaPad 3">
+          @if (fieldError('nombre')) {
+            <span class="form-error">{{ fieldError('nombre') }}</span>
+          }
+        </div>
+
+        <!-- SKU + Categoría -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-sku">SKU *</label>
+            <input class="form-control"
+                   [class.invalid]="fieldError('sku')"
+                   formControlName="sku"
+                   id="input-sku"
+                   placeholder="ej: LAP-LEN-001"
+                   style="text-transform:uppercase;">
+            @if (fieldError('sku')) {
+              <span class="form-error">{{ fieldError('sku') }}</span>
+            }
+            <span class="form-hint">Solo mayúsculas, números y guiones.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="select-categoria">Categoría *</label>
+            <select class="form-control"
+                    [class.invalid]="fieldError('categoria')"
+                    formControlName="categoria"
+                    id="select-categoria">
+              <option value="">Seleccionar…</option>
+              @for (cat of categories; track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+            @if (fieldError('categoria')) {
+              <span class="form-error">{{ fieldError('categoria') }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group">
+          <label class="form-label" for="textarea-desc">Descripción *</label>
+          <textarea class="form-control"
+                    [class.invalid]="fieldError('descripcion')"
+                    formControlName="descripcion"
+                    id="textarea-desc"
+                    rows="3"
+                    placeholder="Describe las características principales del producto…"></textarea>
+          @if (fieldError('descripcion')) {
+            <span class="form-error">{{ fieldError('descripcion') }}</span>
+          }
+        </div>
+
+        <!-- Precio + Stock -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-precio">Precio (CLP) *</label>
+            <input class="form-control"
+                   [class.invalid]="fieldError('precio')"
+                   formControlName="precio"
+                   type="number"
+                   id="input-precio"
+                   min="1"
+                   placeholder="ej: 45900">
+            @if (fieldError('precio')) {
+              <span class="form-error">{{ fieldError('precio') }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-stock">Stock inicial</label>
+            <input class="form-control"
+                   [class.invalid]="fieldError('stock')"
+                   formControlName="stock"
+                   type="number"
+                   id="input-stock"
+                   min="0"
+                   placeholder="0">
+            @if (fieldError('stock')) {
+              <span class="form-error">{{ fieldError('stock') }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- Activo toggle -->
+        <div class="form-group activo-group">
+          <label class="toggle-label" for="checkbox-activo">
+            <input type="checkbox" formControlName="activo" id="checkbox-activo" class="toggle-input">
+            <span class="toggle-switch"></span>
+            <span>Producto activo</span>
+          </label>
+          <span class="form-hint">Los productos inactivos no aparecen en la tienda.</span>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" id="btn-cancel-form">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" id="btn-submit-form">
+          {{ isEditing ? 'Guardar cambios' : 'Crear producto' }}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

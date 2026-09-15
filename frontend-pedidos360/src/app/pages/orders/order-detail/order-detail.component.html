@@ -1,0 +1,171 @@
+<main class="page-content" id="order-detail-page">
+  <!-- Back -->
+  <button class="btn btn-ghost btn-sm back-btn" (click)="goBack()" id="btn-back-to-orders">
+    ← Volver a pedidos
+  </button>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="loading-overlay" id="order-detail-loading">
+      <div class="spinner"></div>
+      <span>Cargando pedido…</span>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error) {
+    <div class="alert alert-danger" id="order-detail-error">
+      <span class="alert-icon">⚠️</span> {{ error }}
+    </div>
+  }
+
+  <!-- Not found -->
+  @if (!loading && !error && !order) {
+    <div class="empty-state card" id="order-not-found">
+      <div class="card-body">
+        <div class="empty-icon">🔍</div>
+        <h3>Pedido no encontrado</h3>
+        <p>El pedido que buscas no existe o no tienes acceso a él.</p>
+        <button class="btn btn-primary" (click)="goBack()">Volver a la lista</button>
+      </div>
+    </div>
+  }
+
+  <!-- Order detail -->
+  @if (!loading && !error && order) {
+    <div class="detail-layout" id="order-detail-content">
+      <!-- Main info -->
+      <div class="detail-main">
+        <!-- Header card -->
+        <div class="card" id="order-info-card">
+          <div class="card-header">
+            <div>
+              <h2 style="margin:0; font-size:1.375rem;">{{ order.numero }}</h2>
+              <p style="margin:0; font-size:0.85rem;">Creado el {{ formatDate(order.fecha) }}</p>
+            </div>
+            <app-order-status-badge [status]="order.estado"></app-order-status-badge>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Cliente</span>
+                <span class="info-value">{{ order.cliente }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ order.clienteEmail }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Última actualización</span>
+                <span class="info-value">{{ order.fechaActualizacion ? formatDate(order.fechaActualizacion) : '—' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">ID interno</span>
+                <span class="info-value">#{{ order.id }}</span>
+              </div>
+            </div>
+
+            @if (order.notas) {
+              <div style="margin-top:1rem; padding:0.875rem; background:var(--color-surface-2); border-radius:var(--radius-md);">
+                <span class="info-label">Notas</span>
+                <p style="margin:0.25rem 0 0; font-size:0.9rem;">{{ order.notas }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Items table -->
+        <div class="card" id="order-items-card" style="margin-top:1.25rem;">
+          <div class="card-header">
+            <h3>Productos del pedido</h3>
+            <span class="badge badge-neutral">{{ order.items?.length ?? 0 }} ítem{{ (order.items?.length ?? 0) !== 1 ? 's' : '' }}</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="order-items-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Cant.</th>
+                  <th>Precio unit.</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of order.items; track item.productoId) {
+                  <tr>
+                    <td>{{ item.productNombre }}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>{{ formatCLP(item.precioUnitario) }}</td>
+                    <td><strong>{{ formatCLP(item.subtotal) }}</strong></td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="3" style="text-align:right; font-weight:700; padding-right:1rem;">Total</td>
+                  <td><strong class="total-value">{{ formatCLP(order.total) }}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="detail-sidebar">
+        <!-- Status manager (Admin/Operator only) -->
+        @if (canEditStatus) {
+          <div class="card" id="order-status-editor">
+            <div class="card-header">
+              <h3>Gestionar estado</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label" for="select-new-status">Cambiar estado</label>
+                <select class="form-control" id="select-new-status"
+                        [(ngModel)]="selectedStatus">
+                  @for (status of statusOptions; track status) {
+                    <option [value]="status">{{ status }}</option>
+                  }
+                </select>
+              </div>
+
+              @if (saveOk) {
+                <div class="alert alert-success" id="save-success-alert">
+                  <span class="alert-icon">✅</span> Estado actualizado correctamente
+                </div>
+              }
+
+              <button class="btn btn-primary btn-full"
+                      (click)="updateStatus()"
+                      [disabled]="saving || selectedStatus === order.estado"
+                      id="btn-update-status">
+                @if (saving) { <div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> }
+                {{ saving ? 'Guardando…' : 'Actualizar estado' }}
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Order summary card -->
+        <div class="card" id="order-summary-card" style="margin-top:1rem;">
+          <div class="card-body">
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span>{{ formatCLP(order.total) }}</span>
+            </div>
+            <div class="summary-row">
+              <span>Envío</span>
+              <span class="text-success">Gratis</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row total">
+              <span>Total</span>
+              <strong>{{ formatCLP(order.total) }}</strong>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  }
+</main>

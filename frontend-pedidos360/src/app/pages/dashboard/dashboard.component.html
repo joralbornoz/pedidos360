@@ -1,22 +1,248 @@
-<div class="dashboard-container">
-  <h1>Dashboard</h1>
-  <p>Bienvenido, {{ userName }}</p>
-  <p>Roles: {{ userRoles.join(', ') || 'Sin rol asignado' }}</p>
-  <button (click)="logout()">Cerrar sesión</button>
-  <button (click)="logToken()">Mostrar token (debug)</button>
+<div class="page-layout" id="dashboard-page">
+  <app-topbar></app-topbar>
 
-  <hr>
+  <main class="page-content">
+    <!-- Welcome Header -->
+    <header class="dashboard-welcome" id="dashboard-welcome">
+      <div class="welcome-text">
+        <p class="welcome-greeting">{{ greeting }}, <strong>{{ userName || 'Usuario' }}</strong> 👋</p>
+        <h1>Tu panel de control</h1>
+        <p>Aquí tienes un resumen de tu actividad en Pedidos360.</p>
+      </div>
+      <div class="welcome-actions">
+        <button class="btn btn-secondary btn-sm" (click)="logToken()" id="btn-debug-token">
+          Ver token (debug)
+        </button>
+        <button class="btn btn-primary" (click)="goToOrders()" id="btn-go-orders">
+          Ver pedidos →
+        </button>
+      </div>
+    </header>
 
-  <h2>Pedidos (GET /api/orders)</h2>
-  <button (click)="loadOrders()" [disabled]="ordersLoading">
-    {{ ordersLoading ? 'Cargando' : 'Cargar pedidos' }}
-  </button>
+    <!-- ═══════════════════════════════════════ -->
+    <!-- ADMIN VIEW                             -->
+    <!-- ═══════════════════════════════════════ -->
+    @if (isAdmin()) {
+      <section class="dashboard-section" id="admin-section">
+        <div class="section-header">
+          <div>
+            <h2>Resumen global</h2>
+            <p>Métricas de toda la operación en tiempo real</p>
+          </div>
+          <span class="role-indicator admin">🛡️ Admin</span>
+        </div>
 
-  <p *ngIf="ordersError" style="color: red;">{{ ordersError }}</p>
+        <div class="grid-kpi" id="admin-kpi-grid">
+          @for (kpi of adminKpis; track kpi.label) {
+            <div class="kpi-card" [id]="'kpi-' + kpi.label.toLowerCase().replace(' ', '-')">
+              <span class="kpi-icon">{{ kpi.icon }}</span>
+              <div class="kpi-value">{{ kpi.value }}</div>
+              <div class="kpi-label">{{ kpi.label }}</div>
+              @if (kpi.change) {
+                <div class="kpi-change" [class.positive]="kpi.positive" [class.negative]="!kpi.positive">
+                  {{ kpi.positive ? '↑' : '↓' }} {{ kpi.change }}
+                </div>
+              }
+            </div>
+          }
+        </div>
 
-  <ul *ngIf="orders.length > 0">
-    <li *ngFor="let order of orders">
-      #{{ order.id }} — {{ order.cliente }} — {{ order.estado }}
-    </li>
-  </ul>
+        <!-- Quick actions Admin -->
+        <div class="quick-actions" id="admin-quick-actions">
+          <h3>Acciones rápidas</h3>
+          <div class="actions-grid">
+            <a routerLink="/orders" class="action-card" id="action-all-orders">
+              <span class="action-icon">📋</span>
+              <div>
+                <strong>Gestionar pedidos</strong>
+                <p>Ver y administrar todos los pedidos</p>
+              </div>
+            </a>
+            <a routerLink="/catalog" class="action-card" id="action-catalog">
+              <span class="action-icon">🗂️</span>
+              <div>
+                <strong>Catálogo de productos</strong>
+                <p>Administrar productos y stock</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- OPERATOR VIEW                          -->
+    <!-- ═══════════════════════════════════════ -->
+    @if (isOperator()) {
+      <section class="dashboard-section" id="operator-section">
+        <div class="section-header">
+          <div>
+            <h2>Cola de trabajo</h2>
+            <p>Pedidos que requieren tu atención ahora</p>
+          </div>
+          <span class="role-indicator operator">⚙️ Operator</span>
+        </div>
+
+        <div class="operator-grid" id="operator-queue-grid">
+          <!-- En proceso -->
+          <div class="queue-card card" id="operator-en-proceso">
+            <div class="card-header">
+              <h3>🔄 En proceso <span class="count-badge">{{ operatorEnProceso.length }}</span></h3>
+              <a routerLink="/orders" class="btn btn-ghost btn-sm">Ver todos</a>
+            </div>
+            <div class="card-body">
+              @if (operatorEnProceso.length === 0) {
+                <div class="empty-state">
+                  <p>No hay pedidos en proceso.</p>
+                </div>
+              } @else {
+                <ul class="order-mini-list">
+                  @for (order of operatorEnProceso; track order.id) {
+                    <li class="order-mini-item" (click)="goToOrder(order.id)"
+                        [id]="'op-en-proceso-' + order.id">
+                      <div class="order-mini-info">
+                        <span class="order-mini-num">{{ order.numero }}</span>
+                        <span class="order-mini-client">{{ order.cliente }}</span>
+                      </div>
+                      <app-order-status-badge [status]="order.estado"></app-order-status-badge>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+
+          <!-- Pendientes -->
+          <div class="queue-card card" id="operator-pendientes">
+            <div class="card-header">
+              <h3>⏳ Pendientes <span class="count-badge warning">{{ operatorPendientes.length }}</span></h3>
+              <a routerLink="/orders" class="btn btn-ghost btn-sm">Ver todos</a>
+            </div>
+            <div class="card-body">
+              @if (operatorPendientes.length === 0) {
+                <div class="empty-state">
+                  <p>Sin pedidos pendientes. ¡Todo al día! 🎉</p>
+                </div>
+              } @else {
+                <ul class="order-mini-list">
+                  @for (order of operatorPendientes; track order.id) {
+                    <li class="order-mini-item" (click)="goToOrder(order.id)"
+                        [id]="'op-pendiente-' + order.id">
+                      <div class="order-mini-info">
+                        <span class="order-mini-num">{{ order.numero }}</span>
+                        <span class="order-mini-client">{{ order.cliente }}</span>
+                      </div>
+                      <app-order-status-badge [status]="order.estado"></app-order-status-badge>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Operator KPI mini -->
+        <div class="grid-kpi" style="margin-top:1.5rem;" id="operator-kpi-mini">
+          <div class="kpi-card">
+            <span class="kpi-icon">🔄</span>
+            <div class="kpi-value">{{ operatorEnProceso.length }}</div>
+            <div class="kpi-label">En proceso</div>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon">⏳</span>
+            <div class="kpi-value">{{ operatorPendientes.length }}</div>
+            <div class="kpi-label">Pendientes de atención</div>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon">📦</span>
+            <div class="kpi-value">{{ operatorEnProceso.length + operatorPendientes.length }}</div>
+            <div class="kpi-label">Total a gestionar</div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- CUSTOMER VIEW                          -->
+    <!-- ═══════════════════════════════════════ -->
+    @if (isCustomer()) {
+      <section class="dashboard-section" id="customer-section">
+        <div class="section-header">
+          <div>
+            <h2>Mis últimos pedidos</h2>
+            <p>Estado actual de tus pedidos recientes</p>
+          </div>
+          <span class="role-indicator customer">🛍️ Cliente</span>
+        </div>
+
+        @if (customerOrders.length === 0) {
+          <div class="empty-state card" id="customer-empty-orders">
+            <div class="card-body">
+              <div class="empty-icon">📦</div>
+              <h3>No tienes pedidos aún</h3>
+              <p>Cuando realices un pedido aparecerá aquí.</p>
+              <a routerLink="/orders" class="btn btn-primary" id="btn-create-first-order">
+                Hacer mi primer pedido
+              </a>
+            </div>
+          </div>
+        } @else {
+          <div class="table-wrapper" id="customer-orders-table">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nº Pedido</th>
+                  <th>Fecha</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of customerOrders; track order.id) {
+                  <tr (click)="goToOrder(order.id)" [id]="'customer-order-row-' + order.id">
+                    <td><strong>{{ order.numero }}</strong></td>
+                    <td>{{ formatDate(order.fecha) }}</td>
+                    <td>{{ order.items?.length ?? 0 }} producto{{ (order.items?.length ?? 0) !== 1 ? 's' : '' }}</td>
+                    <td><strong>{{ formatCLP(order.total) }}</strong></td>
+                    <td>
+                      <app-order-status-badge [status]="order.estado"></app-order-status-badge>
+                    </td>
+                    <td>
+                      <button class="btn btn-ghost btn-sm" (click)="$event.stopPropagation(); goToOrder(order.id)">
+                        Ver detalle →
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="customer-footer-actions">
+            <a routerLink="/orders" class="btn btn-secondary" id="btn-all-my-orders">
+              Ver todos mis pedidos
+            </a>
+            <a routerLink="/orders" class="btn btn-primary" id="btn-new-order-customer">
+              + Nuevo pedido
+            </a>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Sin rol asignado -->
+    @if (!isAdmin() && !isOperator() && !isCustomer()) {
+      <div class="no-role-state" id="no-role-state">
+        <div class="card">
+          <div class="card-body empty-state">
+            <div class="empty-icon">🔐</div>
+            <h3>Sin rol asignado</h3>
+            <p>Tu cuenta no tiene permisos configurados. Contacta al administrador.</p>
+          </div>
+        </div>
+      </div>
+    }
+  </main>
 </div>
