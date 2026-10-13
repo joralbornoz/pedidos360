@@ -1,18 +1,26 @@
 package cl.duoc.pedidos360.orders.controller;
+
+import cl.duoc.pedidos360.orders.dto.OrderStatusEvent;
 import cl.duoc.pedidos360.orders.entity.Order;
 import cl.duoc.pedidos360.orders.repository.OrderRepository;
+import cl.duoc.pedidos360.orders.service.OrderStatusPublisher;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 public class OrdersController {
+
     private final OrderRepository orderRepository;
-    public OrdersController(OrderRepository orderRepository) {
+    private final OrderStatusPublisher orderStatusPublisher;
+
+    public OrdersController(OrderRepository orderRepository, OrderStatusPublisher orderStatusPublisher) {
         this.orderRepository = orderRepository;
+        this.orderStatusPublisher = orderStatusPublisher;
     }
 
     @GetMapping("/api/orders")
-    public List<Order> getOrders(){
+    public List<Order> getOrders() {
         return orderRepository.findAll();
     }
 
@@ -46,6 +54,10 @@ public class OrdersController {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
         order.setEstado(estado);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        orderStatusPublisher.publish(
+            new OrderStatusEvent(saved.getId(), saved.getCliente(), saved.getEstado())
+        );
+        return saved;
     }
 }
