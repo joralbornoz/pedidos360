@@ -1,0 +1,45 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: ms-pedidos360-rabbitmq
+
+  # ── RabbitMQ / CloudAMQP ─────────────────────────────────────────────────────
+  rabbitmq:
+    host: ${RABBITMQ_HOST:shark.rmq.cloudamqp.com}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:pquhoisa}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: ${RABBITMQ_VHOST:pquhoisa}
+    ssl:
+      enabled: false   # CloudAMQP Little Lemur usa puerto 5672 sin SSL en AMQP
+    connection-timeout: 10000
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 2000
+          max-attempts: 3
+          multiplier: 2.0
+
+  # ── Base de datos (Supabase) ──────────────────────────────────────────────────
+  datasource:
+    url: jdbc:postgresql://aws-0-sa-east-1.pooler.supabase.com:5432/postgres
+    username: postgres.iheybwtypcbgiqitrdpf
+    password: ${SUPABASE_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# ── URL del microservicio catalog (para descuento de stock) ───────────────────
+catalog:
+  service:
+    url: ${CATALOG_SERVICE_URL:http://localhost:8082}
