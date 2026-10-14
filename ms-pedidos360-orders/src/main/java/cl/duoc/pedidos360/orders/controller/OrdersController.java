@@ -51,13 +51,14 @@ public class OrdersController {
 
     @PatchMapping("/api/orders/{id}/status")
     public Order updateStatus(@PathVariable Long id, @RequestParam String estado) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
-        order.setEstado(estado);
-        Order saved = orderRepository.save(order);
-        orderStatusPublisher.publish(
-            new OrderStatusEvent(saved.getId(), saved.getCliente(), saved.getEstado())
-        );
-        return saved;
-    }
+    Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+    String estadoAnterior = order.getEstado();
+    order.setEstado(estado);
+    Order saved = orderRepository.save(order);
+    orderStatusPublisher.publish(
+        new OrderStatusEvent(saved.getId(), saved.getCliente(), estadoAnterior, estado)
+    );
+    return saved;
+}
 }
