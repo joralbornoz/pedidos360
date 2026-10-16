@@ -37,4 +37,23 @@ public class CatalogProxyController {
                 .retrieve()
                 .body(Map.class);
     }
+    
+    @PutMapping("/api/catalog/{id}")
+    @PreAuthorize("hasAnyRole('Admin', 'Operator')")
+    public Map<String, Object> updateProduct(@PathVariable Long id, @RequestBody Map<String, Object> product) {
+        return restClient.put()
+                .uri("/api/catalog/{id}", id)
+                .body(product)
+                .retrieve()
+                .body(Map.class);
+    }
+
+    @DeleteMapping("/api/catalog/{id}")
+    @PreAuthorize("hasAnyRole('Admin', 'Operator')")
+    public void deleteProduct(@PathVariable Long id) {
+        restClient.delete()
+                .uri("/api/catalog/{id}", id)
+                .retrieve()
+                .toBodilessEntity();
+    }
 }
