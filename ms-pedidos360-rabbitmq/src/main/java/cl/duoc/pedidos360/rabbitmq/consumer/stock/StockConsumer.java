@@ -1,4 +1,4 @@
-package cl.duoc.pedidos360.rabbitmq.consumer;
+package cl.duoc.pedidos360.rabbitmq.consumer.stock;
 
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import cl.duoc.pedidos360.rabbitmq.consumer.support.MessageAck;

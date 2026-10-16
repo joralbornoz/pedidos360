@@ -1,4 +1,4 @@
-package cl.duoc.pedidos360.rabbitmq.consumer;
+package cl.duoc.pedidos360.rabbitmq.consumer.audit;
 
 import cl.duoc.pedidos360.rabbitmq.consumer.support.MessageAck;
 import cl.duoc.pedidos360.rabbitmq.dto.AuditEvent;
