@@ -43,3 +43,20 @@ spring:
 catalog:
   service:
     url: ${CATALOG_SERVICE_URL:http://localhost:8082}
+
+
+# ── Topología RabbitMQ ───────────────────────────────
+pedidos360:
+  rabbit:
+    exchange: pedidos360.exchange
+    dlx: pedidos360.dlx
+    queues:
+      notifications: q.pedidos360.notifications
+      stock: q.pedidos360.stock
+      audit: q.pedidos360.audit
+      dlq: q.pedidos360.dlq
+    routing-keys:
+      status-changed: order.status.changed
+      status-pattern: order.status.*
+      stock-decrement: order.stock.decrement
+      audit-pattern: audit.#
