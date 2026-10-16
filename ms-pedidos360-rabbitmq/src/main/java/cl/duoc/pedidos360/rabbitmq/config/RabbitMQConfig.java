@@ -9,6 +9,9 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +26,11 @@ import java.util.Map;
  *   q.pedidos360.notifications  ← routing key: order.status.*
  *   q.pedidos360.stock          ← routing key: order.stock.decrement
  *   q.pedidos360.audit          ← routing key: audit.#
- *   q.pedidos360.dlq            ← dead-letter de las tres anteriores
+ *
+ * Dead-letter queues (una por cola):
+ *   q.pedidos360.notifications.dlq
+ *   q.pedidos360.stock.dlq
+ *   q.pedidos360.audit.dlq
  */
 @Configuration
 public class RabbitMQConfig {
@@ -36,7 +43,11 @@ public class RabbitMQConfig {
     public static final String Q_NOTIFICATIONS = "q.pedidos360.notifications";
     public static final String Q_STOCK         = "q.pedidos360.stock";
     public static final String Q_AUDIT         = "q.pedidos360.audit";
-    public static final String Q_DLQ           = "q.pedidos360.dlq";
+
+    // ── Dead-letter queues (una por cola) ─────────────────────────────────────
+    public static final String Q_NOTIFICATIONS_DLQ = "q.pedidos360.notifications.dlq";
+    public static final String Q_STOCK_DLQ         = "q.pedidos360.stock.dlq";
+    public static final String Q_AUDIT_DLQ         = "q.pedidos360.audit.dlq";
 
     // ── Routing keys ──────────────────────────────────────────────────────────
     public static final String RK_STATUS   = "order.status.changed";
@@ -55,36 +66,54 @@ public class RabbitMQConfig {
         return ExchangeBuilder.directExchange(EXCHANGE_DLX).durable(true).build();
     }
 
-    // ── Queues ────────────────────────────────────────────────────────────────
+    // ── Queues principales ────────────────────────────────────────────────────
 
-    private Map<String, Object> dlqArgs() {
+    private Map<String, Object> dlqArgs(String dlqRoutingKey) {
         Map<String, Object> args = new HashMap<>();
         args.put("x-dead-letter-exchange", EXCHANGE_DLX);
-        args.put("x-dead-letter-routing-key", Q_DLQ);
+        args.put("x-dead-letter-routing-key", dlqRoutingKey);
         return args;
     }
 
     @Bean
     public Queue notificationsQueue() {
-        return QueueBuilder.durable(Q_NOTIFICATIONS).withArguments(dlqArgs()).build();
+        return QueueBuilder.durable(Q_NOTIFICATIONS)
+                .withArguments(dlqArgs(Q_NOTIFICATIONS_DLQ))
+                .build();
     }
 
     @Bean
     public Queue stockQueue() {
-        return QueueBuilder.durable(Q_STOCK).withArguments(dlqArgs()).build();
+        return QueueBuilder.durable(Q_STOCK)
+                .withArguments(dlqArgs(Q_STOCK_DLQ))
+                .build();
     }
 
     @Bean
     public Queue auditQueue() {
-        return QueueBuilder.durable(Q_AUDIT).withArguments(dlqArgs()).build();
+        return QueueBuilder.durable(Q_AUDIT)
+                .withArguments(dlqArgs(Q_AUDIT_DLQ))
+                .build();
+    }
+
+    // ── Dead-letter queues ────────────────────────────────────────────────────
+
+    @Bean
+    public Queue notificationsDlq() {
+        return QueueBuilder.durable(Q_NOTIFICATIONS_DLQ).build();
     }
 
     @Bean
-    public Queue deadLetterQueue() {
-        return QueueBuilder.durable(Q_DLQ).build();
+    public Queue stockDlq() {
+        return QueueBuilder.durable(Q_STOCK_DLQ).build();
     }
 
-    // ── Bindings ──────────────────────────────────────────────────────────────
+    @Bean
+    public Queue auditDlq() {
+        return QueueBuilder.durable(Q_AUDIT_DLQ).build();
+    }
+
+    // ── Bindings principales ──────────────────────────────────────────────────
 
     @Bean
     public Binding bindNotifications() {
@@ -107,18 +136,37 @@ public class RabbitMQConfig {
                 .with("audit.#");
     }
 
+    // ── Bindings DLQ (una por cola) ───────────────────────────────────────────
+
     @Bean
-    public Binding bindDlq() {
-        return BindingBuilder.bind(deadLetterQueue())
+    public Binding bindNotificationsDlq() {
+        return BindingBuilder.bind(notificationsDlq())
                 .to(deadLetterExchange())
-                .with(Q_DLQ);
+                .with(Q_NOTIFICATIONS_DLQ);
+    }
+
+    @Bean
+    public Binding bindStockDlq() {
+        return BindingBuilder.bind(stockDlq())
+                .to(deadLetterExchange())
+                .with(Q_STOCK_DLQ);
+    }
+
+    @Bean
+    public Binding bindAuditDlq() {
+        return BindingBuilder.bind(auditDlq())
+                .to(deadLetterExchange())
+                .with(Q_AUDIT_DLQ);
     }
 
     // ── Serialización JSON ────────────────────────────────────────────────────
 
     @Bean
     public MessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return new Jackson2JsonMessageConverter(objectMapper);
     }
 
     @Bean
@@ -136,6 +184,7 @@ public class RabbitMQConfig {
         factory.setMessageConverter(jsonMessageConverter());
         return factory;
     }
+
     @Bean
     public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
         return new RabbitAdmin(connectionFactory);
