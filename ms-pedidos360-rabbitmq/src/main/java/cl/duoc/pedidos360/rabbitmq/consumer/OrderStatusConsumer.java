@@ -1,5 +1,6 @@
 package cl.duoc.pedidos360.rabbitmq.consumer;
 
+import cl.duoc.pedidos360.rabbitmq.config.RabbitMQConfig;
 import cl.duoc.pedidos360.rabbitmq.consumer.support.MessageAck;
 import cl.duoc.pedidos360.rabbitmq.dto.OrderStatusEvent;
 import cl.duoc.pedidos360.rabbitmq.entity.AuditLog;
@@ -29,7 +30,7 @@ public class OrderStatusConsumer {
         this.acknowledger = acknowledger;
     }
 
-    @RabbitListener(queues = "${pedidos360.rabbit.queues.notifications}", ackMode = "MANUAL")
+    @RabbitListener(queues = RabbitMQConfig.Q_NOTIFICATIONS, ackMode = "MANUAL")
     public void handleStatusChanged(OrderStatusEvent event,
                                     Channel channel,
                                     @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag,

@@ -2,28 +2,21 @@ package cl.duoc.pedidos360.orders.service;
 
 import cl.duoc.pedidos360.orders.dto.OrderStatusEvent;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-/**
- * El exchange y la routing key se leen desde application.yml
- */
+
 @Service
 public class OrderStatusPublisher {
 
-    private final RabbitTemplate rabbitTemplate;
-    private final String exchange;
-    private final String routingKey;
+    private static final String EXCHANGE = "pedidos360.exchange";
+    private static final String ROUTING_KEY = "order.status.changed";
 
-    public OrderStatusPublisher(
-            RabbitTemplate rabbitTemplate,
-            @Value("${pedidos360.rabbit.exchange}") String exchange,
-            @Value("${pedidos360.rabbit.routing-keys.status-changed}") String routingKey) {
+    private final RabbitTemplate rabbitTemplate;
+
+    public OrderStatusPublisher(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
-        this.exchange = exchange;
-        this.routingKey = routingKey;
     }
 
     public void publish(OrderStatusEvent event) {
-        rabbitTemplate.convertAndSend(exchange, routingKey, event);
+        rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, event);
     }
 }

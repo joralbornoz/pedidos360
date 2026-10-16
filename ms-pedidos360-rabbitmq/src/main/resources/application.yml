@@ -44,7 +44,8 @@ catalog:
   service:
     url: ${CATALOG_SERVICE_URL:http://localhost:8082}
 
-# ── Topología RabbitMQ (nombres centralizados) ───────────────────────────────
+
+# ── Topología RabbitMQ ───────────────────────────────
 pedidos360:
   rabbit:
     exchange: pedidos360.exchange
@@ -53,13 +54,9 @@ pedidos360:
       notifications: q.pedidos360.notifications
       stock: q.pedidos360.stock
       audit: q.pedidos360.audit
-    dlqs:
-      notifications: q.pedidos360.notifications.dlq
-      stock: q.pedidos360.stock.dlq
-      audit: q.pedidos360.audit.dlq
+      dlq: q.pedidos360.dlq
     routing-keys:
       status-changed: order.status.changed
       status-pattern: order.status.*
       stock-decrement: order.stock.decrement
       audit-pattern: audit.#
-      

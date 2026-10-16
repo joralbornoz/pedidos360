@@ -24,10 +24,3 @@ spring:
     username: ${RABBITMQ_USERNAME}
     password: ${RABBITMQ_PASSWORD}
     virtual-host: ${RABBITMQ_VHOST}
-
-# ── Mensajería: nombres usados al publicar eventos ───────────────────────────
-pedidos360:
-  rabbit:
-    exchange: pedidos360.exchange
-    routing-keys:
-      status-changed: order.status.changed
