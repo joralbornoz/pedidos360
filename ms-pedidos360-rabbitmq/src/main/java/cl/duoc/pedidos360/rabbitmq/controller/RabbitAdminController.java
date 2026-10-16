@@ -5,6 +5,7 @@ import cl.duoc.pedidos360.rabbitmq.dto.ExchangeRequest;
 import cl.duoc.pedidos360.rabbitmq.dto.QueueRequest;
 import cl.duoc.pedidos360.rabbitmq.service.RabbitAdminService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class RabbitAdminController {
     @PostMapping("/queues")
     public ResponseEntity<String> createQueue(@Valid @RequestBody QueueRequest request) {
         rabbitAdminService.createQueue(request.getName(), request.isDurable());
-        return ResponseEntity.ok("Cola creada: " + request.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body("Cola creada: " + request.getName());
     }
 
     @DeleteMapping("/queues/{name}")
@@ -33,7 +34,7 @@ public class RabbitAdminController {
     @PostMapping("/exchanges")
     public ResponseEntity<String> createExchange(@Valid @RequestBody ExchangeRequest request) {
         rabbitAdminService.createExchange(request.getName(), request.getType(), request.isDurable());
-        return ResponseEntity.ok("Exchange creado: " + request.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body("Exchange creado: " + request.getName());
     }
 
     @DeleteMapping("/exchanges/{name}")
@@ -45,7 +46,7 @@ public class RabbitAdminController {
     @PostMapping("/bindings")
     public ResponseEntity<String> createBinding(@Valid @RequestBody BindingRequest request) {
         rabbitAdminService.createBinding(request.getQueueName(), request.getExchangeName(), request.getRoutingKey());
-        return ResponseEntity.ok("Binding creado");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Binding creado");
     }
 
     @DeleteMapping("/bindings")

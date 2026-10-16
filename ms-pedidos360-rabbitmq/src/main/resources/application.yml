@@ -15,13 +15,6 @@ spring:
     ssl:
       enabled: false   # CloudAMQP Little Lemur usa puerto 5672 sin SSL en AMQP
     connection-timeout: 10000
-    listener:
-      simple:
-        retry:
-          enabled: true
-          initial-interval: 2000
-          max-attempts: 3
-          multiplier: 2.0
 
   # ── Base de datos (Supabase) ──────────────────────────────────────────────────
   datasource:
