@@ -1,5 +1,6 @@
 package cl.duoc.pedidos360.rabbitmq.consumer;
 
+import cl.duoc.pedidos360.rabbitmq.config.RabbitMQConfig;
 import cl.duoc.pedidos360.rabbitmq.consumer.support.MessageAck;
 import cl.duoc.pedidos360.rabbitmq.dto.AuditEvent;
 import cl.duoc.pedidos360.rabbitmq.entity.AuditLog;
@@ -34,7 +35,7 @@ public class AuditConsumer {
         this.acknowledger = acknowledger;
     }
 
-    @RabbitListener(queues = "${pedidos360.rabbit.queues.audit}", ackMode = "MANUAL")
+    @RabbitListener(queues = RabbitMQConfig.Q_AUDIT, ackMode = "MANUAL")
     public void handleAuditEvent(AuditEvent event,
                                  Channel channel,
                                  @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag,
