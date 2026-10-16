@@ -60,6 +60,7 @@ public class RabbitMQConfig {
     private Map<String, Object> dlqArgs() {
         Map<String, Object> args = new HashMap<>();
         args.put("x-dead-letter-exchange", EXCHANGE_DLX);
+        args.put("x-dead-letter-routing-key", Q_DLQ);
         return args;
     }
 
