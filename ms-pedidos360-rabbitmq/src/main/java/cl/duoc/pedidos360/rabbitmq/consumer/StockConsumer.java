@@ -1,5 +1,6 @@
 package cl.duoc.pedidos360.rabbitmq.consumer;
 
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import cl.duoc.pedidos360.rabbitmq.config.RabbitMQConfig;
 import cl.duoc.pedidos360.rabbitmq.consumer.support.MessageAck;
 import cl.duoc.pedidos360.rabbitmq.dto.StockDecrementEvent;
@@ -31,7 +32,7 @@ public class StockConsumer {
 
     public StockConsumer(@Value("${catalog.service.url}") String catalogUrl,
                          MessageAck acknowledger) {
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = new RestTemplate(new JdkClientHttpRequestFactory());
         this.catalogUrl   = catalogUrl;
         this.acknowledger = acknowledger;
     }
