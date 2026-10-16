@@ -16,43 +16,27 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Topología RabbitMQ para Pedidos360.
- *
- * Exchange principal : pedidos360.exchange  (topic)
- * Exchange DLX       : pedidos360.dlx       (direct)
- *
- * Queues:
- *   q.pedidos360.notifications  ← routing key: order.status.*
- *   q.pedidos360.stock          ← routing key: order.stock.decrement
- *   q.pedidos360.audit          ← routing key: audit.#
- *
- * Dead-letter queues (una por cola):
- *   q.pedidos360.notifications.dlq
- *   q.pedidos360.stock.dlq
- *   q.pedidos360.audit.dlq
- */
 @Configuration
 public class RabbitMQConfig {
 
     // ── Nombres de exchanges ──────────────────────────────────────────────────
-    public static final String EXCHANGE        = "pedidos360.exchange";
-    public static final String EXCHANGE_DLX    = "pedidos360.dlx";
+    public static final String EXCHANGE = "pedidos360.exchange";
+    public static final String EXCHANGE_DLX = "pedidos360.dlx";
 
     // ── Nombres de queues ─────────────────────────────────────────────────────
     public static final String Q_NOTIFICATIONS = "q.pedidos360.notifications";
-    public static final String Q_STOCK         = "q.pedidos360.stock";
-    public static final String Q_AUDIT         = "q.pedidos360.audit";
+    public static final String Q_STOCK = "q.pedidos360.stock";
+    public static final String Q_AUDIT = "q.pedidos360.audit";
 
     // ── Dead-letter queues (una por cola) ─────────────────────────────────────
     public static final String Q_NOTIFICATIONS_DLQ = "q.pedidos360.notifications.dlq";
-    public static final String Q_STOCK_DLQ         = "q.pedidos360.stock.dlq";
-    public static final String Q_AUDIT_DLQ         = "q.pedidos360.audit.dlq";
+    public static final String Q_STOCK_DLQ = "q.pedidos360.stock.dlq";
+    public static final String Q_AUDIT_DLQ = "q.pedidos360.audit.dlq";
 
     // ── Routing keys ──────────────────────────────────────────────────────────
-    public static final String RK_STATUS   = "order.status.changed";
-    public static final String RK_STOCK    = "order.stock.decrement";
-    public static final String RK_AUDIT    = "audit.#";
+    public static final String RK_STATUS = "order.status.changed";
+    public static final String RK_STOCK = "order.stock.decrement";
+    public static final String RK_AUDIT = "audit.#";
 
     // ── Exchanges ─────────────────────────────────────────────────────────────
 
