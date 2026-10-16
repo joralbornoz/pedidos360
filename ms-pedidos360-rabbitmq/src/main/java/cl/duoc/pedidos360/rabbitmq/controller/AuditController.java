@@ -6,9 +6,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Expone los logs de auditoría almacenados para consulta/verificación.
- */
 @RestController
 @RequestMapping("/api/audit")
 public class AuditController {
