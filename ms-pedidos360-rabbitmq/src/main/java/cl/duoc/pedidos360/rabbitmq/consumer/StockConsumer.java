@@ -1,7 +1,6 @@
 package cl.duoc.pedidos360.rabbitmq.consumer;
 
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-import cl.duoc.pedidos360.rabbitmq.config.RabbitMQConfig;
 import cl.duoc.pedidos360.rabbitmq.consumer.support.MessageAck;
 import cl.duoc.pedidos360.rabbitmq.dto.StockDecrementEvent;
 import com.rabbitmq.client.Channel;
@@ -37,7 +36,7 @@ public class StockConsumer {
         this.acknowledger = acknowledger;
     }
 
-    @RabbitListener(queues = RabbitMQConfig.Q_STOCK, ackMode = "MANUAL")
+    @RabbitListener(queues = "${pedidos360.rabbit.queues.stock}", ackMode = "MANUAL")
     public void handleStockDecrement(StockDecrementEvent event,
                                      Channel channel,
                                      @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag,
