@@ -2,15 +2,20 @@ package cl.duoc.pedidos360.catalog.controller;
 
 import cl.duoc.pedidos360.catalog.entity.Product;
 import cl.duoc.pedidos360.catalog.repository.ProductRepository;
+import cl.duoc.pedidos360.catalog.service.KafkaCatalogEventProducer;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
 public class ProductsController {
-    private final ProductRepository productRepository;
 
-    public ProductsController(ProductRepository productRepository) {
+    private final ProductRepository productRepository;
+    private final KafkaCatalogEventProducer kafkaProducer;
+
+    public ProductsController(ProductRepository productRepository,
+                              KafkaCatalogEventProducer kafkaProducer) {
         this.productRepository = productRepository;
+        this.kafkaProducer = kafkaProducer;
     }
 
     @GetMapping("/api/catalog")
@@ -20,11 +25,13 @@ public class ProductsController {
 
     @PostMapping("/api/catalog")
     public Product createProduct(@RequestBody Product product) {
-    Product newProduct = new Product();
-    newProduct.setNombre(product.getNombre());
-    newProduct.setPrecio(product.getPrecio());
-    newProduct.setStock(product.getStock());
-    return productRepository.save(newProduct);
+        Product newProduct = new Product();
+        newProduct.setNombre(product.getNombre());
+        newProduct.setPrecio(product.getPrecio());
+        newProduct.setStock(product.getStock());
+        Product saved = productRepository.save(newProduct);
+        kafkaProducer.publish(saved.getId(), saved.getNombre(), "CREATED");
+        return saved;
     }
 
     @PutMapping("/api/catalog/{id}")
@@ -34,12 +41,17 @@ public class ProductsController {
         product.setNombre(updatedProduct.getNombre());
         product.setPrecio(updatedProduct.getPrecio());
         product.setStock(updatedProduct.getStock());
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+        kafkaProducer.publish(saved.getId(), saved.getNombre(), "UPDATED");
+        return saved;
     }
 
     @DeleteMapping("/api/catalog/{id}")
     public void deleteProduct(@PathVariable Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         productRepository.deleteById(id);
+        kafkaProducer.publish(product.getId(), product.getNombre(), "DELETED");
     }
 
     @PatchMapping("/api/catalog/{id}/stock")
@@ -50,6 +62,8 @@ public class ProductsController {
             throw new IllegalStateException("Stock insuficiente");
         }
         product.setStock(product.getStock() - cantidad);
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+        kafkaProducer.publish(saved.getId(), saved.getNombre(), "STOCK_UPDATED");
+        return saved;
     }
 }

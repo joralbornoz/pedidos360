@@ -5,6 +5,7 @@ import cl.duoc.pedidos360.orders.entity.Order;
 import cl.duoc.pedidos360.orders.repository.OrderRepository;
 import cl.duoc.pedidos360.orders.service.OrderStatusPublisher;
 import org.springframework.web.bind.annotation.*;
+import cl.duoc.pedidos360.orders.service.KafkaOrderEventProducer;
 
 import java.util.List;
 
@@ -13,10 +14,14 @@ public class OrdersController {
 
     private final OrderRepository orderRepository;
     private final OrderStatusPublisher orderStatusPublisher;
+    private final KafkaOrderEventProducer kafkaOrderEventProducer;
 
-    public OrdersController(OrderRepository orderRepository, OrderStatusPublisher orderStatusPublisher) {
-        this.orderRepository = orderRepository;
-        this.orderStatusPublisher = orderStatusPublisher;
+    public OrdersController(OrderRepository orderRepository,
+                        OrderStatusPublisher orderStatusPublisher,
+                        KafkaOrderEventProducer kafkaOrderEventProducer) {
+    this.orderRepository = orderRepository;
+    this.orderStatusPublisher = orderStatusPublisher;
+    this.kafkaOrderEventProducer = kafkaOrderEventProducer;
     }
 
     @GetMapping("/api/orders")
@@ -56,9 +61,13 @@ public class OrdersController {
     String estadoAnterior = order.getEstado();
     order.setEstado(estado);
     Order saved = orderRepository.save(order);
-    orderStatusPublisher.publish(
-        new OrderStatusEvent(saved.getId(), saved.getCliente(), estadoAnterior, estado)
-    );
+
+    OrderStatusEvent event = new OrderStatusEvent(saved.getId(), saved.getCliente(), estadoAnterior, estado);
+
+    orderStatusPublisher.publish(event);
+
+    kafkaOrderEventProducer.publish(event);
+
     return saved;
-}
+    }
 }
