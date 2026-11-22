@@ -17,7 +17,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    kafka:
+  kafka:
     # La config del productor está en config/KafkaProducerConfig.java
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
 
