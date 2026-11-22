@@ -20,7 +20,7 @@ public class CatalogEventsConsumer {
     @KafkaListener(
             topics = "${pedidos360.kafka.topics.catalog-events}",
             groupId = "${pedidos360.kafka.consumer-groups.kafka-ms}",
-            containerFactory = "kafkaListenerContainerFactory"
+            containerFactory = "catalogEventListenerFactory"
     )
     public void consume(ConsumerRecord<String, CatalogEventDto> record, Acknowledgment ack) {
         try {

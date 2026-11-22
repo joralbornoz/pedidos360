@@ -6,37 +6,22 @@ spring:
     name: ms-pedidos360-kafka
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    # Los 3 brokers: si uno no responde al arrancar, el cliente prueba con los otros
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
 
-    # ── Productor ─────────────────────────────────────────────────────────────
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: all                   # espera confirmación de todos los ISR
-      retries: 3
-      properties:
-        enable.idempotence: true  # exactamente 1 entrega
-
-    # ── Consumidor ────────────────────────────────────────────────────────────
-    consumer:
-      group-id: pedidos360-kafka-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      enable-auto-commit: false   # commit manual
-      properties:
-        spring.json.trusted.packages: "cl.duoc.pedidos360.*"
-
-    # ── Listener ──────────────────────────────────────────────────────────────
-    listener:
-      ack-mode: MANUAL_IMMEDIATE
-
-# ── Tópicos Pedidos360 ────────────────────────────────────────────────────────
+# ── Kafka Pedidos360 ──────────────────────────────────────────────────────────
+# La configuración del productor, consumidor y admin está en las clases de config/
 pedidos360:
   kafka:
     topics:
       order-events: pedidos360.order-events
       catalog-events: pedidos360.catalog-events
+      order-events-dlt: pedidos360.order-events.DLT
+      catalog-events-dlt: pedidos360.catalog-events.DLT
+    topic-defaults:
+      partitions: 3
+      replicas: 3
+      min-insync-replicas: 2
     consumer-groups:
       orders: pedidos360-orders-group
       catalog: pedidos360-catalog-group

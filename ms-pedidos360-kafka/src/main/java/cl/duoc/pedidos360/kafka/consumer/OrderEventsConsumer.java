@@ -23,7 +23,7 @@ public class OrderEventsConsumer {
     @KafkaListener(
             topics = "${pedidos360.kafka.topics.order-events}",
             groupId = "${pedidos360.kafka.consumer-groups.kafka-ms}",
-            containerFactory = "kafkaListenerContainerFactory"
+            containerFactory = "orderEventListenerFactory"
     )
     public void consume(ConsumerRecord<String, OrderEventDto> record, Acknowledgment ack) {
         try {

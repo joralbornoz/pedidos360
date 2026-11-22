@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +90,7 @@ public class KafkaAdminController {
             @Valid @RequestBody OrderEventDto event) {
 
         if (event.getTimestamp() == null) {
-            event.setTimestamp(LocalDateTime.now());
+            event.setTimestamp(Instant.now());
         }
         producer.publishOrderEvent(event);
         return ResponseEntity.ok(Map.of("mensaje", "OrderEvent publicado para orderId=" + event.getOrderId()));
