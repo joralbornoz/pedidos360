@@ -9,10 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * REST API de administración de Kafka.
@@ -89,8 +89,14 @@ public class KafkaAdminController {
     public ResponseEntity<Map<String, String>> publishOrderEvent(
             @Valid @RequestBody OrderEventDto event) {
 
+        if (event.getEventId() == null) {
+            event.setEventId(UUID.randomUUID().toString());
+        }
         if (event.getTimestamp() == null) {
             event.setTimestamp(Instant.now());
+        }
+        if (event.getSource() == null) {
+            event.setSource("ms-pedidos360-kafka (prueba manual)");
         }
         producer.publishOrderEvent(event);
         return ResponseEntity.ok(Map.of("mensaje", "OrderEvent publicado para orderId=" + event.getOrderId()));
@@ -100,8 +106,14 @@ public class KafkaAdminController {
     public ResponseEntity<Map<String, String>> publishCatalogEvent(
             @Valid @RequestBody CatalogEventDto event) {
 
+        if (event.getEventId() == null) {
+            event.setEventId(UUID.randomUUID().toString());
+        }
         if (event.getTimestamp() == null) {
-            event.setTimestamp(LocalDateTime.now());
+            event.setTimestamp(Instant.now());
+        }
+        if (event.getSource() == null) {
+            event.setSource("ms-pedidos360-kafka (prueba manual)");
         }
         producer.publishCatalogEvent(event);
         return ResponseEntity.ok(Map.of("mensaje", "CatalogEvent publicado para productId=" + event.getProductId()));

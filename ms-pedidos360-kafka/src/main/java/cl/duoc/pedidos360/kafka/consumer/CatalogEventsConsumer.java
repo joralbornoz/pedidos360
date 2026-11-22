@@ -20,7 +20,7 @@ public class CatalogEventsConsumer {
     @KafkaListener(
             topics = "${pedidos360.kafka.topics.catalog-events}",
             groupId = "${pedidos360.kafka.consumer-groups.kafka-ms}",
-            containerFactory = "catalogEventListenerFactory"
+            containerFactory = ""
     )
     public void consume(ConsumerRecord<String, CatalogEventDto> record, Acknowledgment ack) {
         try {
@@ -41,11 +41,12 @@ public class CatalogEventsConsumer {
         }
     }
 
-    private void process(CatalogEventDto event, int partition, long offset) {
-        log.info("[Kafka][CatalogEvents] Procesando — productId={} nombre={} accion={} partition={} offset={}",
+        private void process(CatalogEventDto event, int partition, long offset) {
+        log.info("[Kafka][CatalogEvents] Procesando — productId={} nombre={} tipo={} stock={} partition={} offset={}",
                 event.getProductId(),
                 event.getNombre(),
-                event.getAccion(),
+                event.getEventType(),
+                event.getStock(),
                 partition,
                 offset);
     }
