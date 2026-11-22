@@ -3,7 +3,7 @@ package cl.duoc.pedidos360.kafka.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class OrderEventDto {
 
@@ -19,12 +19,12 @@ public class OrderEventDto {
     @NotBlank
     private String estadoNuevo;
 
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
     public OrderEventDto() {}
 
     public OrderEventDto(Long orderId, String cliente, String estadoAnterior,
-                         String estadoNuevo, LocalDateTime timestamp) {
+                         String estadoNuevo, Instant timestamp) {
         this.orderId = orderId;
         this.cliente = cliente;
         this.estadoAnterior = estadoAnterior;
@@ -44,6 +44,6 @@ public class OrderEventDto {
     public String getEstadoNuevo() { return estadoNuevo; }
     public void setEstadoNuevo(String estadoNuevo) { this.estadoNuevo = estadoNuevo; }
 
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public Instant getTimestamp() { return timestamp; }
+    public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
 }
