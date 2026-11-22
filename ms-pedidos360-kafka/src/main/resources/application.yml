@@ -22,7 +22,18 @@ pedidos360:
       partitions: 3
       replicas: 3
       min-insync-replicas: 2
+        # Un grupo por responsabilidad. Dos grupos sobre el mismo tópico = cada uno recibe todo.
     consumer-groups:
-      orders: pedidos360-orders-group
-      catalog: pedidos360-catalog-group
-      kafka-ms: pedidos360-kafka-group
+      orders-analytics: pedidos360-orders-analytics
+      orders-tracking: pedidos360-orders-tracking
+      catalog-inventory: pedidos360-catalog-inventory
+      dlt-monitor: pedidos360-dlt-monitor
+    # Hilos por grupo (máximo útil = número de particiones = 3)
+    concurrency:
+      orders-analytics: 3
+      orders-tracking: 1
+      catalog-inventory: 3
+
+  # Bajo este stock se genera una alerta
+  inventory:
+    low-stock-threshold: 5
