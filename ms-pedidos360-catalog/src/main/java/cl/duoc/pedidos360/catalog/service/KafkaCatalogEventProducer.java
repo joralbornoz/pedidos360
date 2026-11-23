@@ -1,48 +1,41 @@
 package cl.duoc.pedidos360.catalog.service;
 
+import cl.duoc.pedidos360.catalog.dto.CatalogEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-
 /**
- * Productor Kafka de ms-pedidos360-catalog.
- * Publica eventos de cambio en productos al tópico pedidos360.catalog-events.
- * No contiene lógica de negocio — solo serializa y envía.
+ * Publica los eventos del catálogo en el tópico pedidos360.catalog-events.
+ * La key es product-{id}: los eventos de un producto van siempre a la misma
+ * partición (orden garantizado) y la compactación conserva el último de cada uno.
  */
 @Service
 public class KafkaCatalogEventProducer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaCatalogEventProducer.class);
 
-    @Value("${pedidos360.kafka.topics.catalog-events}")
-    private String catalogEventsTopic;
+    private final KafkaTemplate<String, CatalogEvent> kafkaTemplate;
+    private final String catalogEventsTopic;
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
-
-    public KafkaCatalogEventProducer(KafkaTemplate<String, Object> kafkaTemplate) {
+    public KafkaCatalogEventProducer(KafkaTemplate<String, CatalogEvent> kafkaTemplate,
+                                     @Value("${pedidos360.kafka.topics.catalog-events}") String catalogEventsTopic) {
         this.kafkaTemplate = kafkaTemplate;
+        this.catalogEventsTopic = catalogEventsTopic;
     }
 
-    public void publish(Long productId, String nombre, String accion) {
-        String key = "product-" + productId;
-        Map<String, Object> event = Map.of(
-                "productId", productId,
-                "nombre", nombre,
-                "accion", accion,
-                "timestamp", LocalDateTime.now().toString()
-        );
+    public void publish(CatalogEvent event) {
+        String key = "product-" + event.productId();
         kafkaTemplate.send(catalogEventsTopic, key, event)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
-                        log.error("[Kafka][Catalog] Error publicando evento productId={}: {}",
-                                productId, ex.getMessage());
+                        log.error("[Kafka][Catalog] Error publicando {} productId={} eventId={}: {}",
+                                event.eventType(), event.productId(), event.eventId(), ex.getMessage());
                     } else {
-                        log.info("[Kafka][Catalog] Evento publicado — topic={} partition={} offset={}",
+                        log.info("[Kafka][Catalog] {} publicado — productId={} stock={} topic={} partition={} offset={}",
+                                event.eventType(), event.productId(), event.stock(),
                                 result.getRecordMetadata().topic(),
                                 result.getRecordMetadata().partition(),
                                 result.getRecordMetadata().offset());

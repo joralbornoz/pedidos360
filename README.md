@@ -1,6 +1,6 @@
 # Pedidos360
 
-Sistema de gestión de pedidos con autenticación federada (OAuth 2.0 / OpenID Connect), arquitectura de microservicios, mensajería asíncrona con RabbitMQ y despliegue completo en la nube.
+Sistema de gestión de pedidos con autenticación federada (OAuth 2.0 / OpenID Connect), arquitectura de microservicios, mensajería asíncrona con RabbitMQ, streaming de eventos con Apache Kafka y despliegue completo en la nube.
 
 Proyecto desarrollado para la asignatura **DSY1107 — Desarrollo Cloud Native I**, DuocUC.
 
@@ -35,6 +35,7 @@ BFF (Spring Security)  ──►  valida JWT + rol, actúa como proxy
       │
       ├──► ms-pedidos360-orders   ──►  Supabase (PostgreSQL)
       ├──► ms-pedidos360-catalog  ──►  Supabase (PostgreSQL)
+      ├──► ms-pedidos360-kafka    ──►  Kafka Cluster (3 ZooKeeper + 3 brokers)
       └──► ms-pedidos360-rabbitmq ──►  RabbitMQ Cluster (Azure VM)
                                             │
                               ┌─────────────┼─────────────┐
@@ -47,7 +48,7 @@ BFF (Spring Security)  ──►  valida JWT + rol, actúa como proxy
                            .dlq
 ```
 
-El frontend nunca llama directamente a los microservicios: toda petición pasa primero por Azure API Management (que valida el token) y luego por el BFF (que revalida el token, verifica el rol, y reenvía la petición al microservicio correspondiente). Los eventos de negocio (cambios de estado de pedidos, movimientos de stock, auditoría) se publican de forma asíncrona a través de RabbitMQ.
+El frontend nunca llama directamente a los microservicios: toda petición pasa primero por Azure API Management (que valida el token) y luego por el BFF (que revalida el token, verifica el rol, y reenvía la petición al microservicio correspondiente). Los eventos de negocio (cambios de estado de pedidos, movimientos de stock, auditoría) se publican de forma asíncrona a través de RabbitMQ. Además, orders y catalog publican sus eventos en Kafka, donde quedan guardados y se procesan como un stream para analítica en tiempo real, historial de pedidos y monitoreo de inventario (ver [Arquitectura Kafka](#arquitectura-kafka)).
 
 ## Tecnologías
 
@@ -63,6 +64,7 @@ El frontend nunca llama directamente a los microservicios: toda petición pasa p
 - Spring Security con OAuth2 Resource Server (validación de JWT)
 - Spring Data JPA + PostgreSQL (Supabase)
 - Spring AMQP (`spring-boot-starter-amqp`) para integración con RabbitMQ
+- Spring for Apache Kafka (`spring-kafka`) para productores, consumidores y administración de Kafka
 - Desplegado en Render (contenedores Docker)
 
 **Mensajería**
@@ -71,6 +73,7 @@ El frontend nunca llama directamente a los microservicios: toda petición pasa p
 - Topología: 1 Topic Exchange principal + 1 Direct Exchange DLX
 - 3 colas de trabajo + 3 Dead-Letter Queues independientes
 - ACK/NACK explícito con `AcknowledgeMode.MANUAL`
+- Apache Kafka (Confluent 7.6) con 3 nodos ZooKeeper y 3 brokers en Docker Compose, administrado con Kafka UI
 
 **Identidad**
 
@@ -90,6 +93,7 @@ pedidos360/
 ├── ms-pedidos360-bff/        Backend For Frontend (Spring Security, proxy)
 ├── ms-pedidos360-orders/     Microservicio de pedidos (CRUD completo)
 ├── ms-pedidos360-catalog/    Microservicio de catálogo (CRUD completo)
+├── ms-pedidos360-kafka/      Microservicio de streaming (consumers, analítica, DLT y administración de Kafka)
 └── ms-pedidos360-rabbitmq/   Microservicio de mensajería (producers, consumers, topología)
 ```
 
@@ -120,6 +124,109 @@ Cada cola tiene su propia DLQ independiente, configurada con `x-dead-letter-exch
 | `order.stock.decrement` | Aceptación de un pedido       | Servicio de inventario     |
 | `audit.orders`          | Cualquier operación en orders | Servicio de auditoría      |
 
+## Arquitectura Kafka
+
+RabbitMQ se usa para notificaciones y tareas puntuales (el mensaje se borra al consumirlo). Kafka se usa para **streaming de eventos**: los eventos quedan guardados en el tópico según su retención, varios consumidores los pueden leer de forma independiente y se pueden volver a procesar.
+
+```
+ms-pedidos360-orders  ──produce──►  pedidos360.order-events  (3 particiones, 3 réplicas)
+                                        │
+                     ┌──────────────────┴──────────────────┐
+                     ▼                                     ▼
+       pedidos360-orders-analytics           pedidos360-orders-tracking
+       (3 hilos: KPIs en tiempo real)         (1 hilo: historial por pedido)
+
+ms-pedidos360-catalog ──produce──►  pedidos360.catalog-events (3 particiones, 3 réplicas, compactado)
+                                        │
+                                        ▼
+                          pedidos360-catalog-inventory
+                       (3 hilos: stock actual + alertas de stock bajo)
+
+Mensajes que fallan ──►  <tópico>.DLT  ──►  pedidos360-dlt-monitor
+```
+
+### Infraestructura (`ms-pedidos360-kafka/docker-compose.yml`)
+
+| Componente | Cantidad | Detalle |
+| --- | --- | --- |
+| ZooKeeper | 3 nodos | Ensemble con mayoría: tolera la caída de 1 nodo |
+| Brokers Kafka | 3 | `default.replication.factor=3`, `min.insync.replicas=2`, `auto.create.topics=false`, `unclean.leader.election=false` |
+| Kafka UI | 1 | `http://<host>:8090` con login |
+| kafka-init | 1 | Ejecuta `scripts/create-topics.sh` y termina |
+
+Cada broker expone un listener interno (`kafka1..3:29092`, red docker) y uno externo (`9092`, `9093`, `9094`) para los microservicios. La IP pública se configura con `KAFKA_PUBLIC_HOST` en el archivo `.env`.
+
+### Tópicos
+
+| Tópico | Particiones | Réplicas | Configuración | Por qué |
+| --- | --- | --- | --- | --- |
+| `pedidos360.order-events` | 3 | 3 | `delete`, retención 7 días | Historial de eventos de pedidos; permite reprocesar la última semana |
+| `pedidos360.catalog-events` | 3 | 3 | `compact` | Key = `product-{id}`: Kafka conserva el último evento de cada producto (estado actual del catálogo) |
+| `pedidos360.order-events.DLT` | 3 | 3 | `delete`, retención 14 días | Mensajes de pedidos que fallaron |
+| `pedidos360.catalog-events.DLT` | 3 | 3 | `delete`, retención 14 días | Mensajes de catálogo que fallaron |
+
+Todos usan `min.insync.replicas=2`: con `acks=all` un mensaje solo se confirma cuando está en al menos 2 brokers.
+
+### Eventos
+
+| Evento | Productor | Key | Campos principales |
+| --- | --- | --- | --- |
+| `ORDER_CREATED`, `ORDER_STATUS_CHANGED`, `ORDER_DELETED` | orders | `order-{id}` | `eventId`, `eventType`, `orderId`, `cliente`, `estadoAnterior`, `estadoNuevo`, `timestamp`, `source` |
+| `PRODUCT_CREATED`, `PRODUCT_UPDATED`, `PRODUCT_DELETED`, `STOCK_DECREASED` | catalog | `product-{id}` | `eventId`, `eventType`, `productId`, `nombre`, `precio`, `stock`, `timestamp`, `source` |
+
+La key por entidad garantiza que todos los eventos de un mismo pedido o producto vayan a la misma partición y se procesen en orden.
+
+### Configuración de clientes
+
+- **Productores:** `acks=all`, idempotencia activada, reintentos acotados por `delivery.timeout.ms=120000`, `linger.ms=10`, `batch.size=32768`, compresión `lz4`. Serializador JSON propio (sin header `__TypeId__`, para no acoplar los microservicios por el nombre de las clases).
+- **Consumidores:** `auto.offset.reset=earliest`, commit manejado por el contenedor (`AckMode.RECORD`), `max.poll.records=50`, `session.timeout.ms=15000`, rebalanceo cooperativo (`CooperativeStickyAssignor`), `isolation.level=read_committed`. Un deserializador tipado por tópico.
+
+### Consumer groups
+
+| Grupo | Tópico | Hilos | Responsabilidad |
+| --- | --- | --- | --- |
+| `pedidos360-orders-analytics` | order-events | 3 | KPIs en tiempo real (pedidos por estado, totales, últimos eventos) |
+| `pedidos360-orders-tracking` | order-events | 1 | Historial de estados por pedido |
+| `pedidos360-catalog-inventory` | catalog-events | 3 | Stock actual por producto y alertas cuando baja de 5 unidades |
+| `pedidos360-dlt-monitor` | ambos DLT | 1 | Registro de mensajes fallidos con su motivo |
+
+`orders-analytics` y `orders-tracking` leen el mismo tópico en grupos distintos, así que cada uno recibe todos los eventos. Dentro de un grupo con 3 hilos, Kafka reparte una partición por hilo. Los consumidores de pedidos son idempotentes por `eventId`.
+
+### Manejo de errores
+
+1. `ErrorHandlingDeserializer`: un mensaje que no se puede leer no bloquea la partición.
+2. Validación del payload (`@NotNull`, `@NotBlank`, `@PositiveOrZero`) antes de procesar.
+3. `DefaultErrorHandler` con backoff exponencial: 3 reintentos (1 s, 2 s, 4 s) para fallas temporales.
+4. Si se agotan los reintentos, o si el error no se arregla reintentando (JSON inválido, datos inválidos), el mensaje va a `<tópico>.DLT` con headers que indican el tópico, la partición, el offset y el motivo del error.
+
+### Endpoints de Kafka (`ms-pedidos360-kafka`, vía BFF en `/api/kafka`)
+
+**Streaming** (Admin, Operator)
+
+- `GET /api/kafka/streaming/orders/kpis` — KPIs de pedidos en tiempo real
+- `GET /api/kafka/streaming/orders/{orderId}/timeline` — historial de un pedido
+- `GET /api/kafka/streaming/inventory` — stock actual y alertas de stock bajo
+- `GET /api/kafka/streaming/dlt` — últimos mensajes enviados al DLT
+
+**Administración** (Admin)
+
+- `GET /api/kafka/admin/cluster` — brokers y controlador
+- `GET /api/kafka/admin/topics` — listar tópicos
+- `GET /api/kafka/admin/topics/{name}` — particiones, líder, réplicas, ISR, offsets y configuración
+- `POST /api/kafka/admin/topics` — crear tópico (`{"name","partitions","replicationFactor","configs"}`)
+- `DELETE /api/kafka/admin/topics/{name}` — eliminar tópico
+- `POST /api/kafka/admin/topics/{name}/partitions?total=N` — aumentar particiones
+- `GET | PUT /api/kafka/admin/topics/{name}/config` — ver o modificar configuración
+- `DELETE /api/kafka/admin/topics/{name}/config/{key}` — volver al valor por defecto
+- `GET /api/kafka/admin/consumer-groups` — listar grupos
+- `GET /api/kafka/admin/consumer-groups/{groupId}` — consumidores, offsets y lag por partición
+- `POST /api/kafka/admin/consumer-groups/{groupId}/reset-offsets` — reset a `earliest`, `latest` u `offset`
+- `DELETE /api/kafka/admin/consumer-groups/{groupId}` — eliminar grupo
+- `GET /api/kafka/admin/listeners` y `POST /api/kafka/admin/listeners/{id}/stop|start` — detener o iniciar consumidores
+- `POST /api/kafka/publish/order-event` y `/catalog-event` — publicar eventos de prueba
+
+Para reprocesar un tópico: detener el listener del grupo, resetear sus offsets a `earliest` y volver a iniciarlo.
+
 ## Cómo correr el proyecto localmente
 
 ### Requisitos previos
@@ -129,8 +236,20 @@ Cada cola tiene su propia DLQ independiente, configurada con `x-dead-letter-exch
 - Maven (o usar el wrapper `mvnw` incluido)
 - Acceso a la base de datos Supabase (solicitar credenciales al equipo)
 - Acceso al clúster RabbitMQ (solicitar credenciales al equipo) o instancia local
+- Docker Desktop (para el clúster Kafka; necesita unos 4 GB de RAM libres)
 
-### 1. Backend — microservicios
+### 1. Clúster Kafka
+
+```bash
+cd ms-pedidos360-kafka
+cp .env.example .env          # cambiar KAFKA_UI_PASSWORD (y KAFKA_PUBLIC_HOST si es una VM)
+docker compose up -d
+docker compose logs kafka-init   # debe terminar mostrando los 4 tópicos
+```
+
+Kafka UI queda en `http://localhost:8090`.
+
+### 2. Backend — microservicios
 
 Cada microservicio necesita la variable de entorno `SUPABASE_DB_PASSWORD`.
 
@@ -153,12 +272,16 @@ export RABBITMQ_USERNAME=xxxxx
 export RABBITMQ_PASSWORD=xxxxx
 ./mvnw spring-boot:run
 
-# Terminal 4 — ms-pedidos360-bff (puerto 8080)
+# Terminal 4 — ms-pedidos360-kafka (puerto 8084)
+cd ms-pedidos360-kafka
+./mvnw spring-boot:run
+
+# Terminal 5 — ms-pedidos360-bff (puerto 8080)
 cd ms-pedidos360-bff
 ./mvnw spring-boot:run
 ```
 
-### 2. Frontend
+### 3. Frontend
 
 ```bash
 cd frontend-pedidos360
@@ -181,6 +304,10 @@ Accede en `http://localhost:4200`.
 | `RABBITMQ_PORT`        | rabbitmq        | Puerto AMQP (por defecto `5672`)                                |
 | `RABBITMQ_USERNAME`    | rabbitmq        | Usuario de RabbitMQ                                             |
 | `RABBITMQ_PASSWORD`    | rabbitmq        | Contraseña de RabbitMQ                                          |
+| `KAFKA_BOOTSTRAP_SERVERS` | orders, catalog, kafka | Brokers Kafka (por defecto `localhost:9092,localhost:9093,localhost:9094`) |
+| `KAFKA_SERVICE_URL`    | bff             | URL del microservicio de Kafka (por defecto `localhost:8084`)   |
+| `KAFKA_PUBLIC_HOST`    | docker-compose  | Host que anuncian los brokers a los clientes externos           |
+| `KAFKA_UI_PASSWORD`    | docker-compose  | Contraseña de Kafka UI                                          |
 
 ## Autenticación y autorización
 

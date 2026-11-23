@@ -1,5 +1,6 @@
 package cl.duoc.pedidos360.catalog.controller;
 
+import cl.duoc.pedidos360.catalog.dto.CatalogEvent;
 import cl.duoc.pedidos360.catalog.entity.Product;
 import cl.duoc.pedidos360.catalog.repository.ProductRepository;
 import cl.duoc.pedidos360.catalog.service.KafkaCatalogEventProducer;
@@ -30,7 +31,7 @@ public class ProductsController {
         newProduct.setPrecio(product.getPrecio());
         newProduct.setStock(product.getStock());
         Product saved = productRepository.save(newProduct);
-        kafkaProducer.publish(saved.getId(), saved.getNombre(), "CREATED");
+        kafkaProducer.publish(CatalogEvent.of(CatalogEvent.PRODUCT_CREATED, saved));
         return saved;
     }
 
@@ -42,7 +43,7 @@ public class ProductsController {
         product.setPrecio(updatedProduct.getPrecio());
         product.setStock(updatedProduct.getStock());
         Product saved = productRepository.save(product);
-        kafkaProducer.publish(saved.getId(), saved.getNombre(), "UPDATED");
+        kafkaProducer.publish(CatalogEvent.of(CatalogEvent.PRODUCT_UPDATED, saved));
         return saved;
     }
 
@@ -51,7 +52,7 @@ public class ProductsController {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         productRepository.deleteById(id);
-        kafkaProducer.publish(product.getId(), product.getNombre(), "DELETED");
+        kafkaProducer.publish(CatalogEvent.of(CatalogEvent.PRODUCT_DELETED, product));
     }
 
     @PatchMapping("/api/catalog/{id}/stock")
@@ -63,7 +64,7 @@ public class ProductsController {
         }
         product.setStock(product.getStock() - cantidad);
         Product saved = productRepository.save(product);
-        kafkaProducer.publish(saved.getId(), saved.getNombre(), "STOCK_UPDATED");
+        kafkaProducer.publish(CatalogEvent.of(CatalogEvent.STOCK_DECREASED, saved));
         return saved;
     }
 }

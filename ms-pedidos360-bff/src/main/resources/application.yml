@@ -21,3 +21,7 @@ orders:
 catalog:
   service:
     url: ${CATALOG_SERVICE_URL:http://localhost:8082}
+
+kafka:
+  service:
+    url: ${KAFKA_SERVICE_URL:http://localhost:8084}
