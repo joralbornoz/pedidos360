@@ -25,10 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * API REST de administración de Kafka:
- * clúster, tópicos, configuraciones, consumer groups, listeners y publicación de eventos de prueba.
- */
 @RestController
 @RequestMapping("/api/kafka")
 public class KafkaAdminController {
@@ -45,14 +41,10 @@ public class KafkaAdminController {
         this.producer = producer;
     }
 
-    // ── Clúster ──────────────────────────────────────────────────────────────
-
     @GetMapping("/admin/cluster")
     public Map<String, Object> cluster() throws Exception {
         return adminService.clusterInfo();
     }
-
-    // ── Tópicos ──────────────────────────────────────────────────────────────
 
     @GetMapping("/admin/topics")
     public List<String> listTopics() throws Exception {
@@ -82,8 +74,6 @@ public class KafkaAdminController {
         return adminService.describeTopic(name);
     }
 
-    // ── Configuración de tópicos ─────────────────────────────────────────────
-
     @GetMapping("/admin/topics/{name}/config")
     public Map<String, Object> getTopicConfig(@PathVariable String name) throws Exception {
         return adminService.getTopicConfig(name);
@@ -101,8 +91,6 @@ public class KafkaAdminController {
         adminService.resetTopicConfig(name, key);
         return adminService.getTopicConfig(name);
     }
-
-    // ── Consumer groups ──────────────────────────────────────────────────────
 
     @GetMapping("/admin/consumer-groups")
     public List<Map<String, Object>> listConsumerGroups() throws Exception {
@@ -126,8 +114,6 @@ public class KafkaAdminController {
         return Map.of("mensaje", "Consumer group eliminado: " + groupId);
     }
 
-    // ── Listeners del microservicio ──────────────────────────────────────────
-
     @GetMapping("/admin/listeners")
     public List<Map<String, Object>> listListeners() {
         return listenerControl.listListeners();
@@ -143,8 +129,6 @@ public class KafkaAdminController {
         return listenerControl.start(listenerId);
     }
 
-    // ── Publicar eventos ────────────────────────────────────
-
     @PostMapping("/publish/order-event")
     public ResponseEntity<Map<String, String>> publishOrderEvent(@Valid @RequestBody OrderEventDto event) {
         if (event.getEventId() == null) {
@@ -152,12 +136,9 @@ public class KafkaAdminController {
         }
         if (event.getTimestamp() == null) {
             event.setTimestamp(Instant.now());
-<<<<<<< HEAD
-=======
         }
         if (event.getSource() == null) {
             event.setSource("ms-pedidos360-kafka (prueba manual)");
->>>>>>> origin/feature/kafka-rubrica
         }
         producer.publishOrderEvent(event);
         return ResponseEntity.ok(Map.of("mensaje", "OrderEvent publicado para orderId=" + event.getOrderId()));
@@ -170,12 +151,9 @@ public class KafkaAdminController {
         }
         if (event.getTimestamp() == null) {
             event.setTimestamp(Instant.now());
-<<<<<<< HEAD
-=======
         }
         if (event.getSource() == null) {
             event.setSource("ms-pedidos360-kafka (prueba manual)");
->>>>>>> origin/feature/kafka-rubrica
         }
         producer.publishCatalogEvent(event);
         return ResponseEntity.ok(Map.of("mensaje", "CatalogEvent publicado para productId=" + event.getProductId()));
